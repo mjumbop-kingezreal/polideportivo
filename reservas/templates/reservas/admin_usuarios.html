@@ -1,0 +1,58 @@
+{% extends 'reservas/base.html' %}
+
+{% block titulo %}Gestión de Usuarios - Polideportivo{% endblock %}
+
+{% block contenido %}
+<h1 class="page-title">Gestión de Usuarios</h1>
+
+<div class="card" style="padding: 1.5rem;">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Teléfono</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr>
+                <td>{{ u.nombre }}</td>
+                <td>{{ u.correo }}</td>
+                <td>{{ u.telefono|default:"-" }}</td>
+                <td>
+                    <form method="post" style="display:inline-flex; gap:0.5rem;">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="cambiar_rol">
+                        <input type="hidden" name="usuario_id" value="{{ u.id }}">
+                        <select name="rol" class="form-control" style="width: auto; padding: 0.2rem;" onchange="this.form.submit()" {% if u.id == request.usuario.id %}disabled{% endif %}>
+                            <option value="usuario" {% if u.rol == 'usuario' %}selected{% endif %}>Usuario</option>
+                            <option value="recepcionista" {% if u.rol == 'recepcionista' %}selected{% endif %}>Recepcionista</option>
+                            <option value="administrador" {% if u.rol == 'administrador' %}selected{% endif %}>Admin</option>
+                        </select>
+                    </form>
+                </td>
+                <td><span class="badge badge-{{ u.estado }}">{{ u.get_estado_display }}</span></td>
+                <td>
+                    <form method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="toggle_estado">
+                        <input type="hidden" name="usuario_id" value="{{ u.id }}">
+                        {% if u.id == request.usuario.id %}
+                            <button type="button" class="btn btn-outline" disabled>Tú</button>
+                        {% else %}
+                            <button type="submit" class="btn btn-primary" onclick="return confirm('¿Cambiar estado de este usuario?');">
+                                {% if u.estado == 'activo' %}Desactivar{% else %}Activar{% endif %}
+                            </button>
+                        {% endif %}
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

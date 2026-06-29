@@ -1,0 +1,85 @@
+{% extends 'reservas/base.html' %}
+
+{% block titulo %}Mis Reservas - Polideportivo{% endblock %}
+
+{% block contenido %}
+<h1 class="page-title">Mis Reservas</h1>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Cancha</th>
+                <th>Fecha</th>
+                <th>Horario</th>
+                <th>Estado</th>
+                <th>QR</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reservas %}
+            <tr>
+                <td>{{ r.id }}</td>
+                <td>{{ r.cancha.nombre }}</td>
+                <td>{{ r.fecha }}</td>
+                <td>{{ r.hora_inicio }} - {{ r.hora_fin }}</td>
+                <td><span class="badge badge-{{ r.estado }}">{{ r.get_estado_display }}</span></td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#qrModal{{ r.id }}">
+                        <i class="ph-light ph-qr-code"></i> Ver QR
+                    </button>
+                </td>
+                <td>
+                    {% if r.estado == 'confirmada' %}
+                        <a href="{% url 'cancelar_reserva' r.id %}"
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('¿Cancelar esta reserva?');">
+                            Cancelar
+                        </a>
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="color:#888; text-align:center;">No tienes reservas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modales renderizados fuera de la tabla para evitar problemas de z-index -->
+{% for r in reservas %}
+<div class="modal fade" id="qrModal{{ r.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background: rgba(15, 15, 18, 0.95); border: 1px solid var(--border-glass);">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
+        <h5 class="modal-title text-white">Código de Acceso</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center p-4">
+        <div class="bg-white p-3 rounded-3 d-inline-block mb-3">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ r.codigo_qr }}" alt="Código QR" class="img-fluid" width="200" height="200">
+        </div>
+        
+        <div class="text-start mt-3 p-3 rounded" style="background: rgba(255,255,255,0.05);">
+            <p class="mb-2"><strong>Cancha:</strong> {{ r.cancha.nombre }}</p>
+            <p class="mb-2"><strong>Fecha:</strong> {{ r.fecha|date:"d/m/Y" }}</p>
+            <p class="mb-2"><strong>Horario:</strong> {{ r.hora_inicio|time:"H:i" }} - {{ r.hora_fin|time:"H:i" }}</p>
+            <hr class="border-secondary border-opacity-50">
+            <p class="mb-0 text-muted small text-center" style="word-break: break-all;">
+                <strong>Código UUID:</strong><br>
+                <span class="text-white font-monospace">{{ r.codigo_qr }}</span>
+            </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+{% endblock %}

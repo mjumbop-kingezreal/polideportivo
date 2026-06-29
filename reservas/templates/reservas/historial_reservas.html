@@ -1,0 +1,66 @@
+{% extends 'reservas/base.html' %}
+
+{% block titulo %}Historial - Polideportivo{% endblock %}
+
+{% block contenido %}
+<h1 class="mb-4">Historial de Reservas</h1>
+
+<!-- Filtros compactos en grid responsivo -->
+<div class="card p-4 mb-4">
+    <form method="get">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">
+                    <i class="bi bi-search me-2 text-muted"></i>Buscar por Usuario
+                </label>
+                <input type="text" name="q" class="form-control" placeholder="Nombre o correo..." value="{{ busqueda }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">
+                    <i class="bi bi-calendar-event me-2 text-muted"></i>Fecha
+                </label>
+                <input type="date" name="fecha" class="form-control" value="{{ fecha }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel me-2"></i>Filtrar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Tabla de historial -->
+<div class="card p-4">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Cancha</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reservas %}
+                <tr>
+                    <td>#{{ r.id }}</td>
+                    <td>{{ r.usuario.nombre }}</td>
+                    <td>{{ r.cancha.nombre }}</td>
+                    <td>
+                        <i class="bi bi-calendar3 me-1 text-muted"></i>{{ r.fecha|date:"d/m/Y" }} {{ r.hora_inicio|time:"H:i" }}
+                    </td>
+                    <td><span class="badge badge-{{ r.estado }}">{{ r.get_estado_display }}</span></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">No se encontraron registros.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

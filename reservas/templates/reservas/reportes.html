@@ -1,0 +1,343 @@
+{% extends 'reservas/base.html' %}
+
+{% block titulo %}Dashboard - Poly{% endblock %}
+
+{% block contenido %}
+<style>
+    /* KPIs Premium */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+    
+    .kpi-card {
+        background: var(--surface-lvl1);
+        backdrop-filter: var(--glass-panel);
+        -webkit-backdrop-filter: var(--glass-panel);
+        border: 1px solid var(--border-subtle);
+        border-radius: 20px;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, transparent, var(--brand-primary), transparent);
+        opacity: 0;
+        transition: var(--transition-smooth);
+    }
+    
+    .kpi-card:hover::before {
+        opacity: 1;
+    }
+    
+    .kpi-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .kpi-value {
+        font-family: var(--font-display);
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-display);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .kpi-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+
+    /* Tablas Hyper-Premium */
+    .table-section {
+        background: var(--surface-lvl1);
+        border: 1px solid var(--border-subtle);
+        border-radius: 24px;
+        padding: 2rem;
+        margin-bottom: 3rem;
+        backdrop-filter: var(--glass-panel);
+        -webkit-backdrop-filter: var(--glass-panel);
+    }
+    
+    .table-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .table-section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-display);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .premium-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 0.5rem; /* Filas separadas */
+    }
+    
+    .premium-table th {
+        color: var(--text-muted);
+        font-weight: 500;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 0 1rem 0.5rem 1rem;
+        border: none;
+    }
+    
+    .premium-table tbody tr {
+        background: rgba(255, 255, 255, 0.015);
+        transition: var(--transition-smooth);
+    }
+    
+    .premium-table tbody tr:hover {
+        background: var(--surface-lvl2);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px -10px rgba(0,0,0,0.5);
+    }
+    
+    .premium-table td {
+        padding: 1rem;
+        color: var(--text-display);
+        vertical-align: middle;
+        border-top: 1px solid var(--border-subtle);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+    
+    .premium-table td:first-child {
+        border-left: 1px solid var(--border-subtle);
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+    }
+    
+    .premium-table td:last-child {
+        border-right: 1px solid var(--border-subtle);
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+
+    /* Avatares de Tabla */
+    .table-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: #fff;
+        margin-right: 0.75rem;
+    }
+    
+    /* Insignias de Estado Optimizadas */
+    .badge-subtle {
+        padding: 0.4rem 0.75rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    
+    .badge-subtle-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .badge-subtle-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .badge-subtle-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+    .badge-subtle-info { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+</style>
+
+<div class="d-flex align-items-center justify-content-between mb-5">
+    <div>
+        <h1 class="brand-text fs-2 mb-1">Dashboard Insights</h1>
+        <p class="text-muted">Métricas clave y actividad reciente</p>
+    </div>
+</div>
+
+<!-- Grid de KPIs -->
+<div class="kpi-grid">
+    <div class="kpi-card hover-scale glow-hover">
+        <div class="kpi-icon-box" style="background: rgba(99, 102, 241, 0.1); color: var(--brand-primary);">
+            <i class="ph-fill ph-bookmarks"></i>
+        </div>
+        <div class="kpi-value">{{ total_reservas }}</div>
+        <div class="kpi-label text-uppercase">Total Reservas</div>
+    </div>
+    
+    <div class="kpi-card hover-scale glow-hover">
+        <div class="kpi-icon-box" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+            <i class="ph-fill ph-check-circle"></i>
+        </div>
+        <div class="kpi-value">{{ reservas_confirmadas }}</div>
+        <div class="kpi-label text-uppercase">Confirmadas</div>
+    </div>
+    
+    <div class="kpi-card hover-scale glow-hover">
+        <div class="kpi-icon-box" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+            <i class="ph-fill ph-x-circle"></i>
+        </div>
+        <div class="kpi-value">{{ reservas_canceladas }}</div>
+        <div class="kpi-label text-uppercase">Canceladas</div>
+    </div>
+    
+    <div class="kpi-card hover-scale glow-hover">
+        <div class="kpi-icon-box" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+            <i class="ph-fill ph-warning"></i>
+        </div>
+        <div class="kpi-value">{{ reservas_no_asistidas }}</div>
+        <div class="kpi-label text-uppercase">No Asistidas</div>
+    </div>
+    
+    <div class="kpi-card hover-scale glow-hover">
+        <div class="kpi-icon-box" style="background: rgba(139, 92, 246, 0.1); color: var(--brand-accent);">
+            <i class="ph-fill ph-users"></i>
+        </div>
+        <div class="kpi-value">{{ total_usuarios }}</div>
+        <div class="kpi-label text-uppercase">Total Usuarios</div>
+    </div>
+    
+    <div class="kpi-card hover-scale glow-hover">
+        <div class="kpi-icon-box" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8;">
+            <i class="ph-fill ph-tennis-ball"></i>
+        </div>
+        <div class="kpi-value">{{ total_canchas }}</div>
+        <div class="kpi-label text-uppercase">Canchas Activas</div>
+    </div>
+</div>
+
+<!-- Últimas Reservas -->
+<div class="table-section">
+    <div class="table-section-header">
+        <h3 class="table-section-title">
+            <i class="ph-light ph-clock-counter-clockwise text-primary fs-4"></i> Actividad Reciente
+        </h3>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="premium-table">
+            <thead>
+                <tr>
+                    <th width="8%">ID</th>
+                    <th width="30%">Usuario</th>
+                    <th width="25%">Cancha</th>
+                    <th width="22%">Fecha</th>
+                    <th width="15%" class="text-end">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in ultimas_reservas %}
+                <tr>
+                    <td class="text-muted fw-medium">#{{ r.id|stringformat:"04d" }}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="table-avatar" style="background: linear-gradient(135deg, #3f3f46, #27272a);">
+                                {{ r.usuario.nombre|make_list|first|upper }}
+                            </div>
+                            <span class="fw-medium">{{ r.usuario.nombre }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2 text-muted">
+                            <i class="ph-light ph-hexagon fs-5"></i> 
+                            {{ r.cancha.nombre }}
+                        </div>
+                    </td>
+                    <td class="text-muted"><i class="ph-light ph-calendar-blank me-2"></i>{{ r.fecha|date:"d M Y" }}</td>
+                    <td class="text-end">
+                        {% if r.estado == 'confirmada' %}
+                            <span class="badge-subtle badge-subtle-success"><i class="ph-fill ph-check-circle"></i> Confirmada</span>
+                        {% elif r.estado == 'cancelada' %}
+                            <span class="badge-subtle badge-subtle-danger"><i class="ph-fill ph-x-circle"></i> Cancelada</span>
+                        {% elif r.estado == 'no_asistida' %}
+                            <span class="badge-subtle badge-subtle-warning"><i class="ph-fill ph-warning-circle"></i> Falta</span>
+                        {% elif r.estado == 'asistida' %}
+                            <span class="badge-subtle badge-subtle-info"><i class="ph-fill ph-user-check"></i> Asistió</span>
+                        {% else %}
+                            <span class="badge-subtle" style="background: rgba(255,255,255,0.1); color: #fff;">{{ r.get_estado_display }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Historial de Puntos -->
+<div class="table-section">
+    <div class="table-section-header">
+        <h3 class="table-section-title">
+            <i class="ph-light ph-shooting-star text-warning fs-4"></i> Transacciones de Puntos
+        </h3>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="premium-table">
+            <thead>
+                <tr>
+                    <th width="25%">Usuario</th>
+                    <th width="15%">Puntos</th>
+                    <th width="20%">Movimiento</th>
+                    <th width="40%">Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in historial_puntos %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="table-avatar" style="background: linear-gradient(135deg, var(--brand-accent), var(--brand-primary));">
+                                {{ p.usuario.nombre|make_list|first|upper }}
+                            </div>
+                            <span class="fw-medium">{{ p.usuario.nombre }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if p.tipo_movimiento == 'otorgado' %}
+                            <span class="text-success fw-bold">+{{ p.puntos }}</span>
+                        {% else %}
+                            <span class="text-danger fw-bold">-{{ p.puntos }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if p.tipo_movimiento == 'otorgado' %}
+                            <span class="badge-subtle badge-subtle-success"><i class="ph-bold ph-arrow-down-left"></i> {{ p.get_tipo_movimiento_display }}</span>
+                        {% else %}
+                            <span class="badge-subtle badge-subtle-info"><i class="ph-bold ph-arrow-up-right"></i> {{ p.get_tipo_movimiento_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted fs-6">
+                        <div class="d-flex flex-column">
+                            <span>{{ p.descripcion }}</span>
+                            <small class="opacity-50"><i class="ph-light ph-clock me-1"></i>{{ p.fecha|date:"d/m/Y H:i" }}</small>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

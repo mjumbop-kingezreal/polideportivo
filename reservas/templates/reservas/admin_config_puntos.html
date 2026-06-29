@@ -1,0 +1,64 @@
+{% extends 'reservas/base.html' %}
+
+{% block titulo %}Configuración de Puntos{% endblock %}
+
+{% block contenido %}
+<h1 class="page-title">Configuración de Puntos</h1>
+
+<div class="card">
+    <h2>Editar Reglas de Puntos</h2>
+
+    {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+            <div class="alert" style="background: rgba(231,76,60,0.15); border-left: 4px solid #e74c3c; color: #e74c3c;">
+                {{ error }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if form.errors %}
+        <div class="alert" style="background: rgba(231,76,60,0.15); border-left: 4px solid #e74c3c; color: #e74c3c;">
+            Por favor corrige los errores indicados.
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form.visible_fields %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <small style="color: #e74c3c;">{{ error }}</small>
+                    {% endfor %}
+                {% endif %}
+                {% if field.help_text %}
+                    <small style="color: rgba(255,255,255,0.5);">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Guardar Configuración</button>
+    </form>
+</div>
+
+{% if config %}
+<div class="card" style="margin-top: 2rem;">
+    <h2>Configuración Actual</h2>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ config.puntos_por_asistencia }}</div>
+            <div class="stat-label">Puntos por Asistencia</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ config.minimo_canje }}</div>
+            <div class="stat-label">Mínimo para Canje</div>
+        </div>
+    </div>
+    <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+        <strong style="color: rgba(255,255,255,0.7);">Beneficio del Canje:</strong>
+        <p style="margin-top: 0.5rem;">{{ config.descripcion_beneficio }}</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

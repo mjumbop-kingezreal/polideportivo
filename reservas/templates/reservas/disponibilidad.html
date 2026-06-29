@@ -1,0 +1,237 @@
+{% extends 'reservas/base.html' %}
+
+{% block titulo %}Disponibilidad - Poly{% endblock %}
+
+{% block contenido %}
+<style>
+    /* Filtros Superiores */
+    .filter-panel {
+        background: var(--surface-lvl1);
+        backdrop-filter: var(--glass-panel);
+        -webkit-backdrop-filter: var(--glass-panel);
+        border: 1px solid var(--border-subtle);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .form-control-hyper {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-display);
+        border-radius: 12px;
+        padding: 0.8rem 1rem;
+        transition: var(--transition-smooth);
+    }
+    
+    .form-control-hyper:focus {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--brand-primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        color: var(--text-display);
+    }
+
+    /* Grilla tipo Calendario (Notion/Google Style) */
+    .time-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .time-slot {
+        background: var(--surface-lvl1);
+        border: 1px solid var(--border-subtle);
+        border-radius: 16px;
+        padding: 1.25rem;
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition-smooth);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 140px;
+    }
+
+    .time-slot::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0; width: 4px;
+        background: var(--border-subtle);
+        transition: var(--transition-smooth);
+    }
+
+    /* Estados del Slot */
+    .slot-libre::before { background: #34d399; }
+    .slot-ocupado::before { background: #f87171; }
+    .slot-pasado::before { background: var(--border-subtle); opacity: 0.5; }
+
+    .time-slot:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-elevated);
+        background: var(--surface-lvl2);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .slot-libre:hover { border-color: rgba(52, 211, 153, 0.3); }
+
+    /* Tipografía del slot */
+    .slot-time {
+        font-family: var(--font-display);
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-display);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Badges translúcidos */
+    .badge-neon {
+        padding: 0.35rem 0.75rem;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        text-transform: uppercase;
+    }
+    
+    .badge-neon-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .badge-neon-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .badge-neon-secondary { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); }
+
+    /* Botón Oculto (Aparece en hover) */
+    .slot-action {
+        opacity: 0;
+        transform: translateY(10px);
+        transition: var(--transition-smooth);
+        margin-top: 1rem;
+    }
+
+    .time-slot:hover .slot-action {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .btn-reserve {
+        background: rgba(16, 185, 129, 0.1);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        width: 100%;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: var(--transition-smooth);
+    }
+
+    .btn-reserve:hover {
+        background: #10b981;
+        color: #fff;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Estado Vacío */
+    .empty-state {
+        padding: 5rem 2rem;
+        text-align: center;
+        border: 1px dashed var(--border-subtle);
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.01);
+    }
+</style>
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="brand-text fs-2 mb-1">Disponibilidad</h1>
+        <p class="text-muted">Explora el calendario y reserva tu cancha</p>
+    </div>
+</div>
+
+<div class="filter-panel">
+    <form method="get" class="row g-4 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label text-muted fw-medium mb-2"><i class="ph-light ph-hexagon me-1"></i> Selecciona la Cancha</label>
+            <select name="cancha" class="form-select form-control-hyper">
+                <option value="">Todas las canchas...</option>
+                {% for c in canchas %}
+                    <option value="{{ c.id }}" {% if cancha_sel and cancha_sel.id == c.id %}selected{% endif %}>
+                        {{ c.nombre }} ({{ c.get_tipo_deporte_display }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-5">
+            <label class="form-label text-muted fw-medium mb-2"><i class="ph-light ph-calendar-blank me-1"></i> Fecha de Reserva</label>
+            <!-- Nota: Algunos navegadores inyectan estilos feos al input date en dark mode, form-control-hyper lo minimiza -->
+            <input type="date" name="fecha" class="form-control form-control-hyper" value="{{ fecha }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-brand w-100 py-2 d-flex justify-content-center align-items-center gap-2" style="height: 48px;">
+                <i class="ph-bold ph-magnifying-glass"></i> Explorar
+            </button>
+        </div>
+    </form>
+</div>
+
+{% if cancha_sel and horarios %}
+    <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
+        <h3 class="fw-semibold text-white fs-4 m-0">
+            <i class="ph-light ph-clock text-primary me-2"></i> {{ cancha_sel.nombre }}
+        </h3>
+        <span class="badge-neon badge-neon-secondary"><i class="ph-light ph-calendar"></i> {{ fecha }}</span>
+    </div>
+
+    <div class="time-grid">
+        {% for h in horarios %}
+            <div class="time-slot {% if h.is_past %}slot-pasado{% elif h.is_ocupado %}slot-ocupado{% else %}slot-libre{% endif %}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="slot-time">
+                        {{ h.hora_inicio|time:"H:i" }} <span class="text-muted fw-normal fs-6 mx-1">→</span> {{ h.hora_fin|time:"H:i" }}
+                    </div>
+                    
+                    {% if h.is_past %}
+                        <span class="badge-neon badge-neon-secondary"><i class="ph-bold ph-clock-counter-clockwise"></i> Pasado</span>
+                    {% elif h.is_ocupado %}
+                        <span class="badge-neon badge-neon-danger"><i class="ph-bold ph-x"></i> Ocupado</span>
+                    {% else %}
+                        <span class="badge-neon badge-neon-success"><i class="ph-bold ph-check"></i> Libre</span>
+                    {% endif %}
+                </div>
+                
+                <div class="slot-action">
+                    {% if h.is_past %}
+                        <div class="text-muted fs-6 text-center mt-3"><i class="ph-light ph-lock-key me-1"></i> No disponible</div>
+                    {% elif h.is_ocupado %}
+                        <div class="text-danger opacity-75 fs-6 text-center mt-3"><i class="ph-light ph-prohibit me-1"></i> Slot reservado</div>
+                    {% else %}
+                        <a href="{% url 'crear_reserva' %}?cancha={{ cancha_sel.id }}&fecha={{ fecha }}&hora_inicio={{ h.hora_inicio|time:'H:i' }}&hora_fin={{ h.hora_fin|time:'H:i' }}" 
+                           class="btn btn-reserve d-flex justify-content-center align-items-center gap-2 text-decoration-none">
+                            Reservar Ahora <i class="ph-bold ph-arrow-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{% elif cancha_sel %}
+    <div class="empty-state">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4" style="width: 80px; height: 80px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle);">
+            <i class="ph-light ph-calendar-slash text-muted" style="font-size: 2.5rem;"></i>
+        </div>
+        <h4 class="text-white fw-medium mb-2">No hay horarios configurados</h4>
+        <p class="text-muted mx-auto" style="max-width: 400px;">El administrador no ha habilitado franjas horarias para esta cancha en la fecha seleccionada.</p>
+    </div>
+{% elif not fecha and not cancha_sel %}
+    <div class="empty-state">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4" style="width: 80px; height: 80px; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2);">
+            <i class="ph-light ph-magnifying-glass text-primary" style="font-size: 2.5rem;"></i>
+        </div>
+        <h4 class="text-white fw-medium mb-2">Descubre tu próximo partido</h4>
+        <p class="text-muted mx-auto" style="max-width: 400px;">Selecciona una instalación deportiva y la fecha deseada en el panel superior para visualizar la cuadrícula interactiva de horarios.</p>
+    </div>
+{% endif %}
+{% endblock %}

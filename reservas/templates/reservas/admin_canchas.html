@@ -1,0 +1,58 @@
+{% extends 'reservas/base.html' %}
+
+{% block titulo %}Gestión de Canchas - Polideportivo{% endblock %}
+
+{% block contenido %}
+<h1 class="page-title">Gestión de Canchas</h1>
+
+<div class="card">
+    <h3>{% if cancha_editar %}Editar Cancha{% else %}Nueva Cancha{% endif %}</h3>
+
+    <form method="post">
+        {% csrf_token %}
+        {% if cancha_editar %}
+            <input type="hidden" name="cancha_id" value="{{ cancha_editar.id }}">
+        {% endif %}
+
+        {% for field in form.visible_fields %}
+            <div class="form-group">
+                <label>{{ field.label }}</label>
+                {{ field }}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        {% if cancha_editar %}
+            <a href="{% url 'admin_canchas' %}" class="btn btn-outline">Cancelar Edición</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <h3>Canchas Registradas</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Deporte</th>
+                <th>Ubicación</th>
+                <th>Estado</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in canchas %}
+            <tr>
+                <td>{{ c.nombre }}</td>
+                <td>{{ c.get_tipo_deporte_display }}</td>
+                <td>{{ c.ubicacion }}</td>
+                <td><span class="badge badge-{{ c.estado }}">{{ c.get_estado_display }}</span></td>
+                <td>
+                    <a href="?editar={{ c.id }}" class="btn btn-outline">Editar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

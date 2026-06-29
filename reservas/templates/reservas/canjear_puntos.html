@@ -1,0 +1,110 @@
+{% extends 'reservas/base.html' %}
+
+{% block titulo %}Canjear Puntos{% endblock %}
+
+{% block contenido %}
+<h1 class="mb-4">Canjear Puntos</h1>
+
+<!-- Tarjeta de puntos disponibles -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card p-4 text-center">
+            <div style="font-size: 2.5rem; font-weight: 700; color: var(--brand-primary);">{{ usuario.puntos_acumulados }}</div>
+            <div class="text-muted mt-1">Puntos Disponibles</div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario de canje -->
+<div class="card p-4 mb-4">
+    <h2 class="mb-3">
+        <i class="bi bi-arrow-repeat me-2 text-primary"></i>Canjear mis puntos
+    </h2>
+
+    {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+            <div class="alert" style="background: rgba(231,76,60,0.15); border-left: 4px solid #e74c3c; color: #e74c3c; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem;">
+                {{ error }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if form.errors %}
+        <div class="alert" style="background: rgba(231,76,60,0.15); border-left: 4px solid #e74c3c; color: #e74c3c; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem;">
+            Por favor corrige los errores indicados.
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            {% for field in form.visible_fields %}
+                <div class="col-md-6">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        {% for error in field.errors %}
+                            <small style="color: #e74c3c;">{{ error }}</small>
+                        {% endfor %}
+                    {% endif %}
+                    {% if field.help_text %}
+                        <small class="text-muted d-block mt-1">{{ field.help_text }}</small>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-gift me-2"></i>Canjear Puntos
+            </button>
+        </div>
+    </form>
+</div>
+
+{% if historial %}
+<!-- Historial de movimientos de puntos -->
+<div class="card p-4 mb-4">
+    <h2 class="mb-3">
+        <i class="bi bi-clock-history me-2 text-muted"></i>Historial de Puntos Reciente
+    </h2>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th class="text-center">Puntos</th>
+                    <th>Descripcion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in historial %}
+                <tr>
+                    <td>
+                        <i class="bi bi-calendar3 me-1 text-muted"></i>{{ item.fecha|date:"d/m/Y H:i" }}
+                    </td>
+                    <td>
+                        <span class="badge">{{ item.get_tipo_movimiento_display }}</span>
+                    </td>
+                    <td class="text-center fw-bold">
+                        {% if item.puntos > 0 %}
+                            <span style="color: #2ecc71;">+{{ item.puntos }}</span>
+                        {% else %}
+                            <span style="color: #e74c3c;">{{ item.puntos }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">{{ item.descripcion }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="text-center mt-4">
+    <a href="{% url 'perfil' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Volver al Perfil
+    </a>
+</div>
+{% endblock %}

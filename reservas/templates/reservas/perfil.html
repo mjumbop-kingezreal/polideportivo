@@ -1,0 +1,30 @@
+{% extends 'reservas/base.html' %}
+
+{% block titulo %}Perfil - Polideportivo{% endblock %}
+
+{% block contenido %}
+<h1 class="page-title">Mi Perfil</h1>
+
+<div class="card" style="max-width: 600px; margin: 0 auto; padding: 2rem;">
+    <h2>{{ usuario.nombre }}</h2>
+    <p><strong>Correo:</strong> {{ usuario.correo }}</p>
+    <p><strong>Teléfono:</strong> {{ usuario.telefono|default:"No registrado" }}</p>
+    <p><strong>Rol:</strong> {{ usuario.get_rol_display }}</p>
+    <p><strong>Puntos Wow:</strong> <span class="badge badge-confirmada">{{ usuario.puntos_acumulados }}</span></p>
+
+    <h3 style="margin-top: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem;">Editar Datos</h3>
+    {% if form.errors %}
+        <div class="alert alert-error">Por favor revisa los errores.</div>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form.visible_fields %}
+        <div class="form-group">
+            <label>{{ field.label }}</label>
+            {{ field }}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends 'reservas/base.html' %}
+
+{% block titulo %}Canchas - Polideportivo{% endblock %}
+
+{% block contenido %}
+<h1 class="mb-4">Canchas Disponibles</h1>
+
+<!-- Filtros compactos en grid responsivo -->
+<div class="card p-4 mb-4">
+    <form method="get">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">
+                    <i class="bi bi-trophy me-2 text-muted"></i>Deporte
+                </label>
+                <select name="tipo" class="form-select">
+                    <option value="">Todos</option>
+                    {% for value, label in tipos %}
+                        <option value="{{ value }}" {% if filtro_tipo == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">
+                    <i class="bi bi-check-circle me-2 text-muted"></i>Estado
+                </label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos</option>
+                    {% for value, label in estados %}
+                        <option value="{{ value }}" {% if filtro_estado == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel me-2"></i>Filtrar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Grid de canchas -->
+<div class="row g-4">
+    {% for cancha in canchas %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card p-4 h-100">
+            <h3 class="mb-3">{{ cancha.nombre }}</h3>
+            <p class="mb-2">
+                <i class="bi bi-trophy me-2 text-primary"></i>{{ cancha.get_tipo_deporte_display }}
+            </p>
+            <p class="mb-2">
+                <i class="bi bi-geo-alt me-2 text-primary"></i>{{ cancha.ubicacion }}
+            </p>
+            <p class="mb-2">
+                <span class="badge badge-{{ cancha.estado }}">{{ cancha.get_estado_display }}</span>
+            </p>
+            {% if cancha.descripcion %}
+                <p class="text-muted mt-2" style="font-size: 0.85rem;">{{ cancha.descripcion }}</p>
+            {% endif %}
+            {% if cancha.estado == 'disponible' %}
+                <div class="mt-auto pt-3">
+                    <a href="{% url 'disponibilidad' %}?cancha={{ cancha.id }}" class="btn btn-primary w-100">
+                        <i class="bi bi-eye me-2"></i>Ver Disponibilidad
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card p-5 text-center">
+            <p class="text-muted mb-0">No se encontraron canchas.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

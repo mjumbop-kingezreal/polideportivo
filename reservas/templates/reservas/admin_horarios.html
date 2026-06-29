@@ -1,0 +1,60 @@
+{% extends 'reservas/base.html' %}
+
+{% block titulo %}Gestión de Horarios - Polideportivo{% endblock %}
+
+{% block contenido %}
+<h1 class="page-title">Gestión de Horarios</h1>
+
+<div class="card">
+    <h3>{% if horario_editar %}Editar Horario{% else %}Nuevo Horario{% endif %}</h3>
+
+    <form method="post">
+        {% csrf_token %}
+        {% if horario_editar %}
+            <input type="hidden" name="horario_id" value="{{ horario_editar.id }}">
+        {% endif %}
+
+        {% for field in form.visible_fields %}
+            <div class="form-group">
+                <label>{{ field.label }}</label>
+                {{ field }}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        {% if horario_editar %}
+            <a href="{% url 'admin_horarios' %}" class="btn btn-outline">Cancelar</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <h3>Horarios Registrados</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Cancha</th>
+                <th>Día</th>
+                <th>Inicio</th>
+                <th>Fin</th>
+                <th>Activo</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in horarios %}
+            <tr>
+                <td>{{ h.cancha.nombre }}</td>
+                <td>{{ h.get_dia_semana_display }}</td>
+                <td>{{ h.hora_inicio }}</td>
+                <td>{{ h.hora_fin }}</td>
+                <td>{% if h.activo %}✅{% else %}❌{% endif %}</td>
+                <td>
+                    <a href="?editar={{ h.id }}" class="btn btn-outline">Editar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

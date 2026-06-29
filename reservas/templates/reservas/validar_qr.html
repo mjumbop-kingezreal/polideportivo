@@ -1,0 +1,36 @@
+{% extends 'reservas/base.html' %}
+
+{% block titulo %}Validar QR - Polideportivo{% endblock %}
+
+{% block contenido %}
+<h1 class="page-title">Validar Código QR</h1>
+
+<div class="card" style="max-width: 500px;">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Código QR</label>
+            {{ form.codigo_qr }}
+        </div>
+        <button type="submit" class="btn btn-primary">Verificar</button>
+    </form>
+</div>
+
+{% if resultado %}
+<div class="qr-resultado {% if resultado.valido %}qr-valido{% else %}qr-invalido{% endif %}">
+    <h3 style="margin-bottom:0.5rem;">
+        {% if resultado.valido %}✅{% else %}❌{% endif %}
+        {{ resultado.mensaje }}
+    </h3>
+
+    {% if resultado.reserva %}
+    <table style="margin-top:1rem; text-align:left;">
+        <tr><th>Usuario</th><td>{{ resultado.reserva.usuario.nombre }}</td></tr>
+        <tr><th>Cancha</th><td>{{ resultado.reserva.cancha.nombre }}</td></tr>
+        <tr><th>Fecha</th><td>{{ resultado.reserva.fecha }}</td></tr>
+        <tr><th>Horario</th><td>{{ resultado.reserva.hora_inicio }} - {{ resultado.reserva.hora_fin }}</td></tr>
+    </table>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
