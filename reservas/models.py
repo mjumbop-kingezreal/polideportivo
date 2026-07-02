@@ -4,7 +4,14 @@ from django.db.models import Q
 
 
 class Usuario(models.Model):
-    """Usuarios del sistema: ciudadanos, recepcionistas y administradores."""
+    """Usuarios del sistema: ciudadanos, recepcionistas y administradores.
+
+    DECISIÓN ARQUITECTÓNICA: Se utiliza un modelo de usuario personalizado
+    en lugar de django.contrib.auth.User para tener control total sobre los
+    campos, roles y lógica de autenticación específica del polideportivo.
+    La autenticación se maneja mediante sesiones de Django con cifrado
+    PBKDF2 para las contraseñas (django.contrib.auth.hashers).
+    """
 
     class Rol(models.TextChoices):
         USUARIO = 'usuario', 'Usuario'

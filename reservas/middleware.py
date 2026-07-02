@@ -26,6 +26,9 @@ class ExceptionLoggingMiddleware:
         Se ejecuta cuando una vista lanza una excepción no capturada.
         Registra el error en LogErrores y devuelve una respuesta 500 amigable.
         """
+        from django.http import Http404
+        if isinstance(exception, Http404):
+            return None  # Let Django handle 404s properly
         # Obtener información del error
         modulo = request.path
         descripcion = (

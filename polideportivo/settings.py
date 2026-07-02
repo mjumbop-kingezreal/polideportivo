@@ -84,6 +84,9 @@ DATABASES = {
         'PASSWORD': 'davidj741',
         'OPTIONS': {
             'charset': 'utf8mb4',
+            # IMPORTANTE: MySQL debe usar InnoDB (default desde MySQL 5.5+)
+            # para que select_for_update() funcione correctamente en las
+            # transacciones atómicas de reservas.
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
     }
@@ -123,6 +126,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 from django.contrib.messages import constants as message_constants
 

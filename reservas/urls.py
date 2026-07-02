@@ -37,4 +37,8 @@ urlpatterns = [
     path('admin-horarios/', views.admin_horarios_view, name='admin_horarios'),
     path('admin-puntos/', views.admin_config_puntos_view, name='admin_config_puntos'),
     path('reportes/', views.reportes_view, name='reportes'),
+
+    # Exportación de reportes (PDF/Excel)
+    path('reportes/pdf/', views.exportar_pdf_view, name='exportar_pdf'),
+    path('reportes/excel/', views.exportar_excel_view, name='exportar_excel'),
 ]
