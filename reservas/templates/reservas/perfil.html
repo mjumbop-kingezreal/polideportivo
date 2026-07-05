@@ -3,28 +3,47 @@
 {% block titulo %}Perfil - Polideportivo{% endblock %}
 
 {% block contenido %}
-<h1 class="page-title">Mi Perfil</h1>
+<div class="page-header">
+    <div>
+        <div class="eyebrow">Cuenta</div>
+        <h1 class="page-title">Mi perfil</h1>
+        <p class="page-subtitle">Actualiza tus datos y consulta tus puntos acumulados.</p>
+    </div>
+</div>
 
-<div class="card" style="max-width: 600px; margin: 0 auto; padding: 2rem;">
-    <h2>{{ usuario.nombre }}</h2>
-    <p><strong>Correo:</strong> {{ usuario.correo }}</p>
-    <p><strong>Teléfono:</strong> {{ usuario.telefono|default:"No registrado" }}</p>
-    <p><strong>Rol:</strong> {{ usuario.get_rol_display }}</p>
-    <p><strong>Puntos Wow:</strong> <span class="badge badge-confirmada">{{ usuario.puntos_acumulados }}</span></p>
-
-    <h3 style="margin-top: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem;">Editar Datos</h3>
-    {% if form.errors %}
-        <div class="alert alert-error">Por favor revisa los errores.</div>
-    {% endif %}
-    <form method="post">
-        {% csrf_token %}
-        {% for field in form.visible_fields %}
-        <div class="form-group">
-            <label>{{ field.label }}</label>
-            {{ field }}
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="profile-hero h-100">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="profile-avatar">{{ usuario.nombre|make_list|first|upper }}</div>
+                <div>
+                    <h2 class="fw-bold mb-1">{{ usuario.nombre }}</h2>
+                    <p class="mb-0 text-white-50">{{ usuario.get_rol_display }}</p>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-12"><div class="summary-row border-light border-opacity-25"><span class="text-white-50">Correo</span><strong class="text-white">{{ usuario.correo }}</strong></div></div>
+                <div class="col-12"><div class="summary-row border-light border-opacity-25"><span class="text-white-50">Teléfono</span><strong class="text-white">{{ usuario.telefono|default:"No registrado" }}</strong></div></div>
+                <div class="col-12"><div class="summary-row border-light border-opacity-25"><span class="text-white-50">Puntos</span><strong class="text-white">{{ usuario.puntos_acumulados }}</strong></div></div>
+            </div>
+            <a href="{% url 'canjear_puntos' %}" class="btn btn-light mt-4"><i class="bi bi-stars me-1"></i>Canjear puntos</a>
         </div>
-        {% endfor %}
-        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-    </form>
+    </div>
+    <div class="col-lg-7">
+        <div class="app-card">
+            <h2 class="section-title"><i class="bi bi-pencil-square me-2 text-success"></i>Editar datos personales</h2>
+            {% if form.errors %}<div class="alert-error mb-3">Por favor revisa los errores.</div>{% endif %}
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                {% for field in form.visible_fields %}
+                <div class="col-md-6">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                </div>
+                {% endfor %}
+                <div class="col-12"><button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i>Guardar cambios</button></div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}

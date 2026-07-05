@@ -1,22 +1,27 @@
-"""Vista de generación de código QR."""
+"""Vista de generacion de codigos QR."""
 
 import io
+
 import qrcode
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
-from ..models import Reserva
+
+from ..models import CanjeProducto, Reserva
 from .helpers import login_requerido
 
 
-# ──────────────────────────────────────────────
-# Generador de Código QR (Imagen)
-# ──────────────────────────────────────────────
-
 @login_requerido
 def generar_qr_view(request, codigo_qr):
-    """Genera y devuelve la imagen del código QR a partir de la cadena."""
-    # Opcional: Validar que la reserva exista, aunque aquí solo generamos el QR visual
-    get_object_or_404(Reserva, codigo_qr=codigo_qr)
+    """Genera y devuelve la imagen del codigo QR de una reserva autorizada."""
+    reserva = get_object_or_404(Reserva, codigo_qr=codigo_qr)
+    usuario = request.usuario
+
+    puede_ver = (
+        reserva.usuario_id == usuario.id or
+        usuario.rol in ['recepcionista', 'administrador']
+    )
+    if not puede_ver:
+        return HttpResponseForbidden('No tienes permiso para ver este codigo QR.')
 
     qr = qrcode.QRCode(
         version=1,
@@ -27,7 +32,35 @@ def generar_qr_view(request, codigo_qr):
     qr.add_data(codigo_qr)
     qr.make(fit=True)
 
-    img = qr.make_image(fill_color="black", back_color="white")
+    img = qr.make_image(fill_color='black', back_color='white')
     buf = io.BytesIO()
     img.save(buf, format='PNG')
-    return HttpResponse(buf.getvalue(), content_type="image/png")
+    return HttpResponse(buf.getvalue(), content_type='image/png')
+
+
+@login_requerido
+def generar_voucher_qr_view(request, codigo_voucher):
+    """Genera y devuelve la imagen QR del voucher para mostrarlo al usuario."""
+    canje = get_object_or_404(CanjeProducto.objects.select_related('usuario'), codigo=codigo_voucher)
+    usuario = request.usuario
+
+    puede_ver = (
+        canje.usuario_id == usuario.id or
+        usuario.rol in ['recepcionista', 'administrador']
+    )
+    if not puede_ver:
+        return HttpResponseForbidden('No tienes permiso para ver este voucher.')
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=8,
+        border=2,
+    )
+    qr.add_data(codigo_voucher)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color='black', back_color='white')
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    return HttpResponse(buf.getvalue(), content_type='image/png')

@@ -1,36 +1,622 @@
 {% extends 'reservas/base.html' %}
 
-{% block titulo %}Validar QR - Polideportivo{% endblock %}
+{% block titulo %}Escaner Principal - Polideportivo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .scanner-shell {
+        max-width: 860px;
+        margin: 0 auto;
+    }
+    .scanner-page-header {
+        margin-bottom: 1rem;
+    }
+    .scanner-page-header .page-title {
+        margin-bottom: .35rem;
+    }
+    .scanner-panel {
+        padding: 1.05rem 1.15rem 1.2rem;
+        border-radius: 26px;
+        max-width: 760px;
+        margin: 0 auto;
+    }
+    .mode-tabs {
+        display: flex;
+        justify-content: center;
+        gap: .65rem;
+        margin-bottom: .8rem;
+    }
+    .mode-tab {
+        padding: .65rem 1rem;
+        min-width: 172px;
+        border-radius: 14px;
+        border: 1px solid rgba(64, 94, 131, .22);
+        background: #f7fbff;
+        color: #37506d;
+        font-size: .93rem;
+        font-weight: 800;
+        transition: all .2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .45rem;
+    }
+    .mode-tab:hover {
+        border-color: rgba(32, 123, 229, .35);
+        color: #1d3557;
+        background: #f0f7ff;
+    }
+    .mode-tab.active {
+        background: #eef5ff;
+        border-color: #5b7cfa;
+        color: #17324d;
+        box-shadow: inset 0 0 0 1px rgba(91, 124, 250, .12);
+    }
+    .mode-tab i {
+        font-size: 1rem;
+    }
+    .camera-section,
+    .manual-section {
+        display: none;
+    }
+    .camera-section.active,
+    .manual-section.active {
+        display: block;
+    }
+    .manual-card {
+        max-width: 620px;
+        margin: 0 auto;
+        text-align: center;
+        padding-top: .35rem;
+    }
+    .manual-badge {
+        width: 96px;
+        height: 96px;
+        margin: 0 auto .85rem;
+        border-radius: 28px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #e4f5f1 0%, #d8f0ef 100%);
+        color: #117a74;
+        font-size: 2rem;
+    }
+    .manual-card .section-title {
+        margin-bottom: .45rem;
+        color: #14213d;
+    }
+    .manual-card .text-muted {
+        color: #59708b !important;
+        max-width: 460px;
+        margin: 0 auto .95rem !important;
+    }
+    .manual-form-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 210px;
+        gap: .8rem;
+        align-items: end;
+        margin-top: .25rem;
+    }
+    .manual-label {
+        color: #26486b;
+        font-size: .9rem;
+        font-weight: 800;
+        margin-bottom: .4rem;
+    }
+    #manualInput {
+        height: 58px;
+        border-radius: 18px;
+        border: 1px solid #d6e0ec;
+        font-size: 1rem;
+        color: #1b314f;
+        box-shadow: none;
+    }
+    #manualInput::placeholder {
+        color: #7b91aa;
+    }
+    .manual-submit {
+        height: 58px;
+        border-radius: 18px;
+        font-size: 1.02rem;
+        font-weight: 800;
+    }
+    .scanner-container {
+        position: relative;
+        border-radius: 18px;
+        overflow: hidden;
+        background: #17324d;
+        border: 1px solid rgba(26, 54, 93, .16);
+        max-width: 420px;
+        margin: 0 auto;
+        aspect-ratio: 1;
+    }
+    .scanner-container video {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover;
+        border-radius: 18px;
+    }
+    .scanner-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 2;
+    }
+    .scanner-overlay::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 68%;
+        height: 68%;
+        border: 2px solid rgba(123, 233, 202, .9);
+        border-radius: 12px;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, .42);
+    }
+    .scanner-overlay::after {
+        content: '';
+        position: absolute;
+        left: 16%;
+        width: 68%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #7be9ca, transparent);
+        animation: scanLine 1.9s ease-in-out infinite;
+        box-shadow: 0 0 16px rgba(123, 233, 202, .75);
+    }
+    @keyframes scanLine {
+        0%, 100% { top: 18%; }
+        50% { top: 78%; }
+    }
+    .corner-mark {
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        z-index: 3;
+    }
+    .corner-mark::before,
+    .corner-mark::after {
+        content: '';
+        position: absolute;
+        background: #7be9ca;
+        border-radius: 2px;
+    }
+    .corner-tl { top: 14%; left: 14%; }
+    .corner-tl::before { width: 24px; height: 3px; top: 0; left: 0; }
+    .corner-tl::after { width: 3px; height: 24px; top: 0; left: 0; }
+    .corner-tr { top: 14%; right: 14%; }
+    .corner-tr::before { width: 24px; height: 3px; top: 0; right: 0; }
+    .corner-tr::after { width: 3px; height: 24px; top: 0; right: 0; }
+    .corner-bl { bottom: 14%; left: 14%; }
+    .corner-bl::before { width: 24px; height: 3px; bottom: 0; left: 0; }
+    .corner-bl::after { width: 3px; height: 24px; bottom: 0; left: 0; }
+    .corner-br { bottom: 14%; right: 14%; }
+    .corner-br::before { width: 24px; height: 3px; bottom: 0; right: 0; }
+    .corner-br::after { width: 3px; height: 24px; bottom: 0; right: 0; }
+    .scanner-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 38px 22px;
+        text-align: center;
+        color: rgba(255,255,255,.82);
+        min-height: 280px;
+    }
+    .scanner-placeholder i {
+        font-size: 3.4rem;
+        opacity: .55;
+    }
+    .scanner-placeholder p {
+        margin: 0;
+        font-size: .95rem;
+    }
+    .scanner-status {
+        text-align: center;
+        padding: 10px 12px 0;
+        font-size: .88rem;
+        color: #59708b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .scanner-status.scanning {
+        color: #157f7a;
+    }
+    .camera-actions {
+        display: flex;
+        gap: .65rem;
+        justify-content: center;
+        margin-top: .85rem;
+    }
+    .camera-error {
+        padding: 24px;
+        text-align: center;
+        color: #dc2626;
+    }
+    .camera-error i {
+        font-size: 2.25rem;
+        margin-bottom: 10px;
+        display: block;
+    }
+    .camera-error p {
+        color: rgba(255,255,255,.8);
+        font-size: .84rem;
+        margin-top: 8px;
+    }
+    .scanner-container.scanned {
+        border-color: #22c55e;
+        animation: successFlash .45s ease;
+    }
+    @keyframes successFlash {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        50% { box-shadow: 0 0 28px 10px rgba(34, 197, 94, .24); }
+    }
+    .qr-valido-voucher {
+        border-color: #3b82f6 !important;
+        background: rgba(59, 130, 246, .05) !important;
+    }
+    .qr-valido-voucher .kpi-icon {
+        background: rgba(59, 130, 246, .15) !important;
+        color: #3b82f6 !important;
+    }
+    #qr-reader__dashboard_section_swaplink,
+    #qr-reader__header_message,
+    #qr-reader__dashboard_section_fsr {
+        display: none !important;
+    }
+    #qr-reader {
+        border: none !important;
+        background: transparent !important;
+    }
+    #qr-reader video {
+        border-radius: 18px !important;
+    }
+    @media (max-width: 767.98px) {
+        .scanner-panel {
+            padding: .95rem;
+        }
+        .mode-tabs {
+            flex-direction: column;
+        }
+        .mode-tab {
+            width: 100%;
+            min-width: 0;
+        }
+        .manual-form-row {
+            grid-template-columns: 1fr;
+        }
+        .manual-submit {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block contenido %}
-<h1 class="page-title">Validar Código QR</h1>
-
-<div class="card" style="max-width: 500px;">
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label>Código QR</label>
-            {{ form.codigo_qr }}
+<div class="scanner-shell">
+    <div class="page-header scanner-page-header">
+        <div>
+            <div class="eyebrow">Recepcion</div>
+            <h1 class="page-title">Escaner Principal</h1>
+            <p class="page-subtitle">Escanea accesos y vouchers desde una sola pantalla.</p>
         </div>
-        <button type="submit" class="btn btn-primary">Verificar</button>
-    </form>
-</div>
+    </div>
 
-{% if resultado %}
-<div class="qr-resultado {% if resultado.valido %}qr-valido{% else %}qr-invalido{% endif %}">
-    <h3 style="margin-bottom:0.5rem;">
-        {% if resultado.valido %}✅{% else %}❌{% endif %}
-        {{ resultado.mensaje }}
-    </h3>
+    <div class="qr-panel">
+        <div class="app-card scanner-panel">
+            <div class="mode-tabs">
+                <button type="button" class="mode-tab active" id="btnModeCamera" onclick="switchMode('camera')">
+                    <i class="bi bi-camera-fill"></i> Camara
+                </button>
+                <button type="button" class="mode-tab" id="btnModeManual" onclick="switchMode('manual')">
+                    <i class="bi bi-keyboard"></i> Manual / Lector USB
+                </button>
+            </div>
 
-    {% if resultado.reserva %}
-    <table style="margin-top:1rem; text-align:left;">
-        <tr><th>Usuario</th><td>{{ resultado.reserva.usuario.nombre }}</td></tr>
-        <tr><th>Cancha</th><td>{{ resultado.reserva.cancha.nombre }}</td></tr>
-        <tr><th>Fecha</th><td>{{ resultado.reserva.fecha }}</td></tr>
-        <tr><th>Horario</th><td>{{ resultado.reserva.hora_inicio }} - {{ resultado.reserva.hora_fin }}</td></tr>
-    </table>
-    {% endif %}
+            <div class="camera-section active" id="cameraSection">
+                <div class="scanner-container" id="scannerContainer">
+                    <div id="qr-reader"></div>
+                    <div class="scanner-overlay" id="scannerOverlay" style="display:none;">
+                        <div class="corner-mark corner-tl"></div>
+                        <div class="corner-mark corner-tr"></div>
+                        <div class="corner-mark corner-bl"></div>
+                        <div class="corner-mark corner-br"></div>
+                    </div>
+                    <div class="scanner-placeholder" id="scannerPlaceholder">
+                        <i class="bi bi-camera-fill"></i>
+                        <p>Activa la camara para empezar a escanear.</p>
+                    </div>
+                </div>
+
+                <div class="scanner-status" id="scannerStatus">
+                    <i class="bi bi-info-circle"></i> Camara desactivada
+                </div>
+
+                <div class="camera-actions">
+                    <button type="button" class="btn btn-primary" id="btnStartCamera" onclick="startCamera()">
+                        <i class="bi bi-camera-video me-1"></i>Activar camara
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="btnStopCamera" onclick="stopCamera()" style="display:none;">
+                        <i class="bi bi-camera-video-off me-1"></i>Detener
+                    </button>
+                </div>
+            </div>
+
+            <div class="manual-section" id="manualSection">
+                <div class="manual-card">
+                    <div class="manual-badge"><i class="bi bi-qr-code-scan"></i></div>
+                    <h2 class="section-title">Ingreso manual o lector USB</h2>
+                    <p class="text-muted">Pega el codigo o usa un lector USB. El sistema lo envia automaticamente cuando detecta el escaneo.</p>
+                    <form method="post" id="qrFormManual">
+                        {% csrf_token %}
+                        <div class="manual-form-row">
+                            <div class="text-start">
+                                <label class="form-label manual-label">C?digo de acceso o voucher</label>
+                                <input type="text" name="codigo_qr" id="manualInput" class="form-control" placeholder="Escanear o ingresar codigo" autofocus>
+                            </div>
+                            <button type="submit" class="btn btn-primary manual-submit">
+                                <i class="bi bi-shield-check me-1"></i>Verificar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <form method="post" id="qrFormCamera" style="display:none;">
+                {% csrf_token %}
+                <input type="hidden" name="codigo_qr" id="cameraInput">
+            </form>
+        </div>
+
+        {% if resultado %}
+        <div class="qr-resultado {% if resultado.valido and resultado.es_voucher %}qr-valido-voucher{% elif resultado.valido %}qr-valido{% else %}qr-invalido{% endif %}">
+            <div class="d-flex align-items-start gap-3">
+                <div class="kpi-icon mb-0 {% if not resultado.valido %}bg-danger-subtle text-danger{% endif %}">
+                    {% if resultado.valido %}<i class="bi bi-check-circle-fill"></i>{% else %}<i class="bi bi-x-circle-fill"></i>{% endif %}
+                </div>
+                <div class="flex-grow-1">
+                    <h3 class="section-title mb-1">
+                        {% if resultado.valido and resultado.es_voucher %}
+                            Voucher Validado
+                        {% elif resultado.valido %}
+                            Acceso permitido
+                        {% else %}
+                            Validacion fallida
+                        {% endif %}
+                    </h3>
+                    <p class="mb-0 text-muted">{{ resultado.mensaje }}</p>
+                    {% if resultado.reserva %}
+                    <div class="app-card shadow-none mt-3">
+                        <div class="summary-row"><span>Usuario</span><strong>{{ resultado.reserva.usuario.nombre }}</strong></div>
+                        <div class="summary-row"><span>Cancha</span><strong>{{ resultado.reserva.cancha.nombre }}</strong></div>
+                        <div class="summary-row"><span>Fecha</span><strong>{{ resultado.reserva.fecha }}</strong></div>
+                        <div class="summary-row"><span>Horario</span><strong>{{ resultado.reserva.hora_inicio }} - {{ resultado.reserva.hora_fin }}</strong></div>
+                        <div class="summary-row"><span>Total del grupo</span><strong>{{ resultado.reserva.cantidad_total_personas }} persona{{ resultado.reserva.cantidad_total_personas|pluralize }}</strong></div>
+                        {% if resultado.reserva.tiene_invitados %}
+                        <div class="guest-summary mt-3">
+                            <div class="guest-summary-label">Lista de acompañantes</div>
+                            <ul class="guest-summary-list">
+                                {% for invitado in resultado.reserva.invitados_lista %}
+                                <li>{{ invitado }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% else %}
+                        <div class="guest-summary-empty mt-3">La reserva no registra acompañantes.</div>
+                        {% endif %}
+                        <div class="status-inline success mt-3"><i class="bi bi-check2-circle"></i>Ingreso marcado como visto</div>
+                    </div>
+                    {% endif %}
+                    {% if resultado.es_voucher %}
+                    <div class="app-card shadow-none mt-3">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-printer text-primary"></i>
+                            <strong>Comprobante PDF listo</strong>
+                        </div>
+                        <div class="summary-row"><span>Producto</span><strong>{{ resultado.producto_nombre }}</strong></div>
+                        <p class="text-muted mb-3" style="font-size:0.85rem;">
+                            Se abrira un comprobante PDF pequeno, con formato parecido a factura comercial, listo para imprimir en una impresora termica.
+                        </p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="{% url 'ticket_voucher' resultado.canje_id %}" target="_blank" rel="noopener" class="btn btn-primary" id="btnImprimirVoucher">
+                                <i class="bi bi-file-earmark-pdf me-1"></i>Abrir PDF
+                            </a>
+                            <button type="button" class="btn btn-outline-secondary" onclick="window.location.href=window.location.pathname;">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Nuevo escaneo
+                            </button>
+                        </div>
+                        <div class="alert alert-warning mt-3 mb-0" id="voucherPopupWarning" style="display:none; font-size:0.85rem;">
+                            El navegador bloqueo la ventana del PDF. Haz clic en <strong>Abrir PDF</strong> para abrirlo manualmente.
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 </div>
-{% endif %}
 {% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+    let html5QrCode = null;
+    let isScanning = false;
+
+    function switchMode(mode) {
+        const cameraSection = document.getElementById('cameraSection');
+        const manualSection = document.getElementById('manualSection');
+        const btnCamera = document.getElementById('btnModeCamera');
+        const btnManual = document.getElementById('btnModeManual');
+
+        if (mode === 'camera') {
+            cameraSection.classList.add('active');
+            manualSection.classList.remove('active');
+            btnCamera.classList.add('active');
+            btnManual.classList.remove('active');
+        } else {
+            cameraSection.classList.remove('active');
+            manualSection.classList.add('active');
+            btnCamera.classList.remove('active');
+            btnManual.classList.add('active');
+            stopCamera();
+            setTimeout(() => document.getElementById('manualInput')?.focus(), 100);
+        }
+    }
+
+    function startCamera() {
+        const statusEl = document.getElementById('scannerStatus');
+        const placeholder = document.getElementById('scannerPlaceholder');
+        const overlay = document.getElementById('scannerOverlay');
+        const btnStart = document.getElementById('btnStartCamera');
+        const btnStop = document.getElementById('btnStopCamera');
+
+        statusEl.innerHTML = '<span class="spinner-grow spinner-grow-sm text-primary"></span> Iniciando camara...';
+        statusEl.className = 'scanner-status';
+
+        html5QrCode = new Html5Qrcode('qr-reader');
+
+        const config = {
+            fps: 10,
+            qrbox: function(viewfinderWidth, viewfinderHeight) {
+                let size = Math.min(viewfinderWidth, viewfinderHeight) * 0.7;
+                return { width: size, height: size };
+            },
+            aspectRatio: 1.0,
+        };
+
+        html5QrCode.start(
+            { facingMode: 'environment' },
+            config,
+            onScanSuccess,
+            onScanFailure
+        ).then(() => {
+            isScanning = true;
+            placeholder.style.display = 'none';
+            overlay.style.display = 'block';
+            btnStart.style.display = 'none';
+            btnStop.style.display = 'inline-flex';
+            statusEl.innerHTML = '<span class="spinner-grow spinner-grow-sm text-primary"></span> Escaneando... apunta al codigo';
+            statusEl.className = 'scanner-status scanning';
+        }).catch((err) => {
+            console.error('Error al iniciar camara:', err);
+            placeholder.innerHTML = `
+                <div class="camera-error">
+                    <i class="bi bi-camera-video-off-fill"></i>
+                    <strong>No se pudo acceder a la camara</strong>
+                    <p>Asegurate de permitir el acceso a la camara en tu navegador.
+                       Si estas en computadora, verifica que tengas webcam conectada.</p>
+                    <p>Tambien puedes usar el modo <strong>Manual / Lector USB</strong>.</p>
+                </div>
+            `;
+            statusEl.innerHTML = '<i class="bi bi-exclamation-triangle text-warning"></i> Camara no disponible';
+        });
+    }
+
+    function stopCamera() {
+        if (html5QrCode && isScanning) {
+            html5QrCode.stop().then(() => {
+                isScanning = false;
+                resetScannerUI();
+            }).catch(() => {
+                isScanning = false;
+                resetScannerUI();
+            });
+        }
+    }
+
+    function resetScannerUI() {
+        const statusEl = document.getElementById('scannerStatus');
+        const placeholder = document.getElementById('scannerPlaceholder');
+        const overlay = document.getElementById('scannerOverlay');
+        const btnStart = document.getElementById('btnStartCamera');
+        const btnStop = document.getElementById('btnStopCamera');
+
+        placeholder.style.display = 'flex';
+        placeholder.innerHTML = `
+            <i class="bi bi-camera-fill"></i>
+            <p>Activa la camara para empezar a escanear.</p>
+        `;
+        overlay.style.display = 'none';
+        btnStart.style.display = 'inline-flex';
+        btnStop.style.display = 'none';
+        statusEl.innerHTML = '<i class="bi bi-info-circle"></i> Camara desactivada';
+        statusEl.className = 'scanner-status';
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+        if (!isScanning) return;
+
+        isScanning = false;
+
+        const container = document.getElementById('scannerContainer');
+        const statusEl = document.getElementById('scannerStatus');
+        container.classList.add('scanned');
+        statusEl.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i> Codigo detectado. Verificando...';
+        statusEl.className = 'scanner-status';
+
+        document.getElementById('cameraInput').value = decodedText;
+
+        setTimeout(() => {
+            document.getElementById('qrFormCamera').submit();
+        }, 600);
+
+        if (html5QrCode) {
+            html5QrCode.stop().catch(() => {});
+        }
+    }
+
+    function onScanFailure(error) {
+    }
+
+    (function() {
+        const manualInput = document.getElementById('manualInput');
+        if (!manualInput) return;
+
+        let typingTimer;
+
+        manualInput.addEventListener('input', function() {
+            clearTimeout(typingTimer);
+            const value = this.value.trim();
+
+            if (value.length >= 5) {
+                typingTimer = setTimeout(() => {
+                    document.getElementById('qrFormManual').submit();
+                }, 300);
+            }
+        });
+
+        manualInput.addEventListener('paste', function() {
+            setTimeout(() => {
+                const value = this.value.trim();
+                if (value.length >= 5) {
+                    document.getElementById('qrFormManual').submit();
+                }
+            }, 100);
+        });
+    })();
+
+    window.addEventListener('beforeunload', () => {
+        if (html5QrCode && isScanning) {
+            html5QrCode.stop().catch(() => {});
+        }
+    });
+
+    {% if resultado.es_voucher and resultado.valido %}
+    setTimeout(function() {
+        const ticketUrl = "{% url 'ticket_voucher' resultado.canje_id %}";
+        const popup = window.open(ticketUrl, '_blank', 'width=420,height=620,toolbar=no,scrollbars=yes,resizable=yes');
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+            const warning = document.getElementById('voucherPopupWarning');
+            if (warning) {
+                warning.style.display = 'block';
+            }
+        }
+    }, 300);
+    {% endif %}
+</script>
+{% endblock %}
+

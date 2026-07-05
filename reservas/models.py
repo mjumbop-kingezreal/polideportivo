@@ -1,16 +1,19 @@
+import re
+from datetime import timedelta
+
 from django.db import models
 from django.contrib.auth.hashers import make_password
-from django.db.models import Q
+from django.utils import timezone
 
 
 class Usuario(models.Model):
     """Usuarios del sistema: ciudadanos, recepcionistas y administradores.
 
-    DECISIÓN ARQUITECTÓNICA: Se utiliza un modelo de usuario personalizado
+    DECISION ARQUITECTONICA: Se utiliza un modelo de usuario personalizado
     en lugar de django.contrib.auth.User para tener control total sobre los
-    campos, roles y lógica de autenticación específica del polideportivo.
-    La autenticación se maneja mediante sesiones de Django con cifrado
-    PBKDF2 para las contraseñas (django.contrib.auth.hashers).
+    campos, roles y logica de autenticacion especifica del polideportivo.
+    La autenticacion se maneja mediante sesiones de Django con cifrado
+    PBKDF2 para las contrasenas (django.contrib.auth.hashers).
     """
 
     class Rol(models.TextChoices):
@@ -41,7 +44,7 @@ class Usuario(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        # Cifrar la contraseña antes de guardar si no está cifrada
+        # Cifrar la contrasena antes de guardar si no esta cifrada
         if not self.password.startswith('pbkdf2_'):
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
@@ -59,11 +62,10 @@ class Cancha(models.Model):
     """Canchas deportivas disponibles en el polideportivo."""
 
     class TipoDeporte(models.TextChoices):
-        FUTBOL = 'futbol', 'Fútbol'
+        FUTBOL = 'futbol', 'Futbol'
         BALONCESTO = 'baloncesto', 'Baloncesto'
         VOLEIBOL = 'voleibol', 'Voleibol'
         TENIS = 'tenis', 'Tenis'
-        MICROFUTBOL = 'microfutbol', 'Microfútbol'
         OTRO = 'otro', 'Otro'
 
     class Estado(models.TextChoices):
@@ -83,9 +85,28 @@ class Cancha(models.Model):
         default=Estado.DISPONIBLE,
     )
     descripcion = models.TextField(blank=True, null=True)
+    tipo_personalizado = models.CharField(max_length=80, blank=True, null=True)
+    capacidad_jugadores_min = models.PositiveIntegerField(blank=True, null=True)
+    capacidad_jugadores_max = models.PositiveIntegerField(blank=True, null=True)
+
+    @property
+    def tipo_deporte_label(self):
+        if self.tipo_deporte == self.TipoDeporte.OTRO and self.tipo_personalizado:
+            return self.tipo_personalizado
+        return self.get_tipo_deporte_display()
+
+    @property
+    def capacidad_jugadores_label(self):
+        if self.capacidad_jugadores_min and self.capacidad_jugadores_max:
+            return f"{self.capacidad_jugadores_min} - {self.capacidad_jugadores_max} jugadores"
+        if self.capacidad_jugadores_min:
+            return f"Desde {self.capacidad_jugadores_min} jugadores"
+        if self.capacidad_jugadores_max:
+            return f"Hasta {self.capacidad_jugadores_max} jugadores"
+        return 'Sin especificar'
 
     def __str__(self):
-        return f"{self.nombre} - {self.get_tipo_deporte_display()}"
+        return f"{self.nombre} - {self.tipo_deporte_label}"
 
     class Meta:
         db_table = 'cancha'
@@ -99,10 +120,10 @@ class HorarioDisponible(models.Model):
     class DiaSemana(models.IntegerChoices):
         LUNES = 1, 'Lunes'
         MARTES = 2, 'Martes'
-        MIERCOLES = 3, 'Miércoles'
+        MIERCOLES = 3, 'Miercoles'
         JUEVES = 4, 'Jueves'
         VIERNES = 5, 'Viernes'
-        SABADO = 6, 'Sábado'
+        SABADO = 6, 'Sabado'
         DOMINGO = 7, 'Domingo'
 
     cancha = models.ForeignKey(
@@ -160,9 +181,9 @@ class Reserva(models.Model):
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     observacion = models.TextField(blank=True, null=True)
     lista_invitados = models.TextField(
-        blank=True, 
+        blank=True,
         null=True,
-        help_text="Lista de nombres de los acompañantes (ej. Juan, Pedro, Luis)"
+        help_text='Lista de nombres de los acompanantes (ej. Juan, Pedro, Luis)'
     )
 
     def __str__(self):
@@ -182,15 +203,96 @@ class Reserva(models.Model):
             return True
         return False
 
+    @property
+    def has_ended(self):
+        from django.utils import timezone
+        today_date = timezone.localtime(timezone.now()).date()
+        now_time = timezone.localtime(timezone.now()).time()
+        if self.fecha < today_date:
+            return True
+        if self.fecha == today_date and self.hora_fin <= now_time:
+            return True
+        return False
+
+    @property
+    def can_cancel(self):
+        return self.estado == self.Estado.CONFIRMADA and not self.is_past
+
+    @property
+    def estado_visual(self):
+        if self.estado == self.Estado.CONFIRMADA and self.has_ended:
+            return self.Estado.NO_ASISTIDA
+        return self.estado
+
+    @property
+    def estado_visual_display(self):
+        return dict(self.Estado.choices).get(self.estado_visual, self.estado_visual)
+
+    @staticmethod
+    def parsear_lista_invitados(valor):
+        if not valor:
+            return []
+
+        invitados = []
+        for parte in re.split(r'[\n,;]+', valor):
+            nombre = ' '.join(parte.strip().split())
+            if nombre:
+                invitados.append(nombre)
+        return invitados
+
+    @property
+    def invitados_lista(self):
+        return self.parsear_lista_invitados(self.lista_invitados)
+
+    @property
+    def cantidad_invitados(self):
+        return len(self.invitados_lista)
+
+    @property
+    def cantidad_total_personas(self):
+        return 1 + self.cantidad_invitados
+
+    @property
+    def tiene_invitados(self):
+        return self.cantidad_invitados > 0
     class Meta:
         db_table = 'reserva'
         verbose_name = 'Reserva'
         verbose_name_plural = 'Reservas'
+
+
+class ReservaBloqueo(models.Model):
+    """Bloqueo unico para una franja activa de reserva."""
+
+    cancha = models.ForeignKey(
+        Cancha,
+        on_delete=models.CASCADE,
+        related_name='bloqueos_reserva',
+    )
+    fecha = models.DateField()
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+    reserva = models.OneToOneField(
+        Reserva,
+        on_delete=models.CASCADE,
+        related_name='bloqueo',
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return (
+            f"{self.cancha.nombre} | {self.fecha} | "
+            f"{self.hora_inicio} - {self.hora_fin}"
+        )
+
+    class Meta:
+        db_table = 'reserva_bloqueo'
+        verbose_name = 'Bloqueo de Reserva'
+        verbose_name_plural = 'Bloqueos de Reserva'
         constraints = [
             models.UniqueConstraint(
                 fields=['cancha', 'fecha', 'hora_inicio', 'hora_fin'],
-                condition=Q(estado__in=['confirmada', 'asistida']),
-                name='unique_reserva_activa_por_franja',
+                name='unique_bloqueo_franja_reserva',
             ),
         ]
 
@@ -236,13 +338,13 @@ class PuntosHistorial(models.Model):
 
 
 class LogErrores(models.Model):
-    """Registro de errores del sistema para auditoría."""
+    """Registro de errores del sistema para auditoria."""
 
     class NivelSeveridad(models.TextChoices):
-        INFO = 'info', 'Información'
+        INFO = 'info', 'Informacion'
         WARNING = 'warning', 'Advertencia'
         ERROR = 'error', 'Error'
-        CRITICAL = 'critical', 'Crítico'
+        CRITICAL = 'critical', 'Critico'
 
     fecha = models.DateTimeField(auto_now_add=True)
     modulo_origen = models.CharField(max_length=100)
@@ -265,36 +367,160 @@ class LogErrores(models.Model):
         verbose_name_plural = 'Log de Errores'
         ordering = ['-fecha']
 
+
 class ConfiguracionPuntos(models.Model):
-    """Configuración singleton para las reglas del programa de puntos."""
+    """Configuracion singleton para las reglas del programa de puntos."""
+
     puntos_por_asistencia = models.IntegerField(
         default=10,
         help_text='Puntos otorgados al usuario por cada asistencia confirmada.'
     )
-    minimo_canje = models.IntegerField(
-        default=50,
-        help_text='Cantidad mínima de puntos requerida para realizar un canje.'
-    )
-    descripcion_beneficio = models.TextField(
-        default='Canjea tus puntos por bebidas en el bar, minutos adicionales de uso o prioridad en torneos.',
-        help_text='Descripción de los beneficios disponibles al canjear puntos.'
-    )
 
     def save(self, *args, **kwargs):
-        # Patrón singleton: solo permite un registro
+        # Patron singleton: solo permite un registro
         self.pk = 1
         super().save(*args, **kwargs)
 
     @classmethod
     def obtener(cls):
-        """Obtiene o crea la configuración singleton."""
+        """Obtiene o crea la configuracion singleton."""
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
 
     def __str__(self):
-        return f'Configuración de Puntos (asistencia={self.puntos_por_asistencia}, mín. canje={self.minimo_canje})'
+        return f'Configuracion de Puntos (asistencia={self.puntos_por_asistencia})'
 
     class Meta:
         db_table = 'configuracion_puntos'
-        verbose_name = 'Configuración de Puntos'
-        verbose_name_plural = 'Configuración de Puntos'
+        verbose_name = 'Configuracion de Puntos'
+        verbose_name_plural = 'Configuracion de Puntos'
+
+
+class ProductoBar(models.Model):
+    """Productos del bar canjeables con puntos acumulados."""
+
+    class Categoria(models.TextChoices):
+        BEBIDA = 'bebida', 'Bebida'
+        SNACK = 'snack', 'Snack'
+        OTRO = 'otro', 'Otro'
+
+    nombre = models.CharField(max_length=100)
+    categoria = models.CharField(
+        max_length=20,
+        choices=Categoria.choices,
+    )
+    puntos_requeridos = models.PositiveIntegerField(
+        help_text='Cantidad de puntos necesarios para canjear este producto.'
+    )
+    disponible = models.BooleanField(default=True)
+    descripcion = models.CharField(max_length=200, blank=True)
+
+    def __str__(self):
+        return f"{self.nombre} ({self.puntos_requeridos} pts)"
+
+    class Meta:
+        db_table = 'producto_bar'
+        verbose_name = 'Producto del Bar'
+        verbose_name_plural = 'Productos del Bar'
+        ordering = ['categoria', 'puntos_requeridos']
+
+
+class CanjeProducto(models.Model):
+    """Registro de canjes de productos del bar (vouchers)."""
+
+    class Estado(models.TextChoices):
+        PENDIENTE = 'pendiente', 'Pendiente'
+        ENTREGADO = 'entregado', 'Entregado'
+        CANCELADO = 'cancelado', 'Cancelado'
+
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='canjes_productos',
+    )
+    producto = models.ForeignKey(
+        ProductoBar,
+        on_delete=models.PROTECT,
+        related_name='canjes',
+    )
+    puntos_usados = models.PositiveIntegerField()
+    codigo = models.CharField(
+        max_length=20,
+        unique=True,
+        help_text='Codigo unico para presentar en el bar.'
+    )
+    fecha = models.DateTimeField(auto_now_add=True)
+    estado = models.CharField(
+        max_length=15,
+        choices=Estado.choices,
+        default=Estado.PENDIENTE,
+    )
+
+    VIGENCIA_DIAS = 30
+
+    def __str__(self):
+        return (
+            f"Canje #{self.id} | {self.usuario.nombre} | "
+            f"{self.producto.nombre} | {self.codigo}"
+        )
+
+    @property
+    def fecha_caducidad(self):
+        return self.fecha + timedelta(days=self.VIGENCIA_DIAS)
+
+    @property
+    def esta_caducado(self):
+        return timezone.now() >= self.fecha_caducidad
+
+    @property
+    def dias_restantes(self):
+        if self.esta_caducado:
+            return 0
+        delta = self.fecha_caducidad.date() - timezone.localdate()
+        return max(delta.days, 0)
+
+    @property
+    def esta_vigente(self):
+        return self.estado == self.Estado.PENDIENTE and not self.esta_caducado
+
+    @property
+    def estado_visual(self):
+        if self.estado == self.Estado.ENTREGADO:
+            return 'canjeado'
+        if self.estado == self.Estado.CANCELADO:
+            return 'cancelado'
+        if self.esta_caducado:
+            return 'caducado'
+        return 'vigente'
+
+    @property
+    def estado_visual_label(self):
+        labels = {
+            'vigente': 'Vigente',
+            'caducado': 'Caducado',
+            'canjeado': 'Canjeado',
+            'cancelado': 'Cancelado',
+        }
+        return labels.get(self.estado_visual, self.estado_visual.title())
+
+    @property
+    def vigencia_resumen(self):
+        if self.estado == self.Estado.ENTREGADO:
+            return 'Canjeado en barra'
+        if self.estado == self.Estado.CANCELADO:
+            return 'Cancelado'
+        if self.esta_caducado:
+            return 'Caducado'
+        if self.dias_restantes == 0:
+            return 'Vence hoy'
+        if self.dias_restantes == 1:
+            return 'Vence manana'
+        return f'Vence en {self.dias_restantes} dias'
+
+    class Meta:
+        db_table = 'canje_producto'
+        verbose_name = 'Canje de Producto'
+        verbose_name_plural = 'Canjes de Productos'
+        ordering = ['-fecha']
+
+

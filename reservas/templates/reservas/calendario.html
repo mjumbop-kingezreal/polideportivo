@@ -1,318 +1,121 @@
 {% extends 'reservas/base.html' %}
 
-{% block titulo %}Calendario de Reservas - Poly{% endblock %}
+{% block titulo %}Calendario de Reservas - Polideportivo{% endblock %}
 
 {% block contenido %}
-        color: var(--text-display);
-        border-radius: 12px;
-        padding: 0.6rem 1rem;
-        transition: var(--transition-smooth);
-        min-width: 200px;
-    }
-    
-    .toolbar-input:focus {
-        border-color: var(--brand-primary);
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        color: var(--text-display);
-    }
-
-    /* Estructura Semanal/Diaria */
-    .day-block {
-        background: var(--surface-lvl1);
-        border: 1px solid var(--border-subtle);
-        border-radius: 24px;
-        padding: 2rem;
-        margin-bottom: 2.5rem;
-        backdrop-filter: var(--glass-panel);
-        -webkit-backdrop-filter: var(--glass-panel);
-    }
-    
-    .day-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        border-bottom: 1px solid var(--border-subtle);
-        padding-bottom: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .day-date-badge {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15));
-        border: 1px solid rgba(99, 102, 241, 0.3);
-        color: var(--brand-accent);
-        border-radius: 14px;
-        padding: 0.75rem 1.25rem;
-        font-weight: 700;
-        font-family: var(--font-display);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        line-height: 1.2;
-    }
-    
-    .day-date-badge .day-num { font-size: 1.5rem; }
-    .day-date-badge .day-month { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
-
-    /* Lista Lineal de Reservas (Estilo Notion List) */
-    .reservation-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-    
-    .reservation-item {
-        display: grid;
-        grid-template-columns: 120px 2fr 2fr 1fr auto;
-        align-items: center;
-        background: rgba(255,255,255,0.015);
-        border: 1px solid transparent;
-        border-radius: 16px;
-        padding: 1rem 1.25rem;
-        transition: var(--transition-smooth);
-        gap: 1rem;
-    }
-
-    .reservation-item:hover {
-        background: var(--surface-lvl2);
-        border-color: var(--border-subtle);
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px -10px rgba(0,0,0,0.5);
-    }
-
-    .res-time {
-        font-family: var(--font-display);
-        font-weight: 600;
-        color: var(--text-display);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .res-avatar {
-        width: 32px; height: 32px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #3f3f46, #27272a);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: #fff;
-    }
-    
-    .res-badge {
-        padding: 0.4rem 0.75rem;
-        border-radius: 8px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        justify-content: center;
-    }
-    
-    .res-badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
-    .res-badge-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; }
-    .res-badge-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
-    .res-badge-info { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
-
-    .btn-action-ghost {
-        background: transparent;
-        color: var(--text-muted);
-        border: 1px solid var(--border-subtle);
-        border-radius: 10px;
-        padding: 0.5rem;
-        transition: var(--transition-smooth);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .btn-action-ghost:hover {
-        background: rgba(239, 68, 68, 0.15);
-        color: #f87171;
-        border-color: rgba(239, 68, 68, 0.3);
-    }
-
-    /* Vista Mobile Fallback */
-    @media (max-width: 992px) {
-        .reservation-item {
-            grid-template-columns: 1fr;
-            gap: 0.5rem;
-        }
-        .res-time { margin-bottom: 0.5rem; }
-        .res-action { text-align: right; margin-top: 1rem; }
-    }
-</style>
-
-<div class="d-flex align-items-center justify-content-between mb-4">
+<div class="page-header">
     <div>
-        <h1 class="brand-text fs-2 mb-1">Calendario de Operaciones</h1>
-        <p class="text-muted">Vista {% if vista == 'semanal' %}semanal{% else %}diaria{% endif %} de las reservas del complejo</p>
+        <div class="eyebrow">Agenda</div>
+        <h1 class="page-title">Calendario de operaciones</h1>
+        <p class="page-subtitle">Vista {% if vista == 'semanal' %}semanal{% else %}diaria{% endif %} de reservas activas e históricas.</p>
     </div>
+    <a href="{% url 'crear_reserva_recepcion' %}" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i>Reserva manual</a>
 </div>
 
 <div class="toolbar-panel">
-    <form method="get" class="w-100 d-flex flex-wrap gap-3 align-items-end">
-        <div class="flex-grow-1" style="max-width: 300px;">
-            <label class="text-muted fw-medium mb-2 ms-1 text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;"><i class="ph-light ph-calendar-blank me-1"></i> Fecha Base</label>
-            <input type="date" name="fecha" class="form-control toolbar-input" value="{{ fecha_str }}">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label"><i class="bi bi-calendar-event me-1"></i>Fecha base</label>
+            <input type="date" name="fecha" class="form-control" value="{{ fecha_str }}">
         </div>
-        
-        <div class="flex-grow-1" style="max-width: 250px;">
-            <label class="text-muted fw-medium mb-2 ms-1 text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;"><i class="ph-light ph-faders me-1"></i> Modo de Vista</label>
-            <select name="vista" class="form-select toolbar-input">
-                <option value="diaria" {% if vista == 'diaria' %}selected{% endif %}>Diaria (Solo 1 día)</option>
-                <option value="semanal" {% if vista == 'semanal' %}selected{% endif %}>Semanal (7 días)</option>
+        <div class="col-md-5">
+            <label class="form-label"><i class="bi bi-layout-three-columns me-1"></i>Vista</label>
+            <select name="vista" class="form-select">
+                <option value="diaria" {% if vista == 'diaria' %}selected{% endif %}>Diaria</option>
+                <option value="semanal" {% if vista == 'semanal' %}selected{% endif %}>Semanal</option>
             </select>
         </div>
-        
-        <div>
-            <button type="submit" class="btn btn-brand" style="height: 44px; padding: 0 2rem;">
-                <i class="ph-bold ph-funnel me-1"></i> Aplicar Filtro
-            </button>
-        </div>
+        <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Aplicar</button></div>
     </form>
 </div>
 
 {% if vista == 'semanal' %}
-    <!-- ─── VISTA SEMANAL ─── -->
+<div class="agenda-week">
     {% for dia in dias_semana %}
-    <div class="day-block">
-        <div class="day-header">
-            <div class="day-date-badge">
-                <span class="day-num">{{ dia|date:"d" }}</span>
-                <span class="day-month">{{ dia|date:"M" }}</span>
-            </div>
-            <div>
-                <h3 class="fs-4 fw-semibold text-white mb-0">{{ dia|date:"l"|title }}</h3>
-                <span class="text-muted fs-6">{{ dia|date:"Y" }}</span>
-            </div>
+    <section class="agenda-day">
+        <div class="agenda-date">
+            <strong>{{ dia|date:"d" }}</strong>
+            <div><span>{{ dia|date:"M" }}</span><small class="text-muted">{{ dia|date:"l"|title }}</small></div>
         </div>
-        
-        <div class="reservation-list">
-            {% for r in reservas %}
-                {% if r.fecha == dia %}
-                <div class="reservation-item">
-                    <!-- 1. Hora -->
-                    <div class="res-time">
-                        {{ r.hora_inicio|time:"H:i" }} <span class="text-muted fw-normal fs-6 opacity-50">/</span> {{ r.hora_fin|time:"H:i" }}
-                    </div>
-                    
-                    <!-- 2. Cancha -->
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="d-flex flex-column">
-                            <span class="fw-medium text-white d-flex align-items-center gap-1"><i class="ph-light ph-hexagon text-primary"></i> {{ r.cancha.nombre }}</span>
-                            <span class="text-muted fs-7">{{ r.cancha.get_tipo_deporte_display }}</span>
-                        </div>
-                    </div>
-                    
-                    <!-- 3. Usuario -->
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="res-avatar">{{ r.usuario.nombre|make_list|first|upper }}</div>
-                        <span class="fw-medium text-muted">{{ r.usuario.nombre }}</span>
-                    </div>
-                    
-                    <!-- 4. Estado -->
-                    <div>
-                        {% if r.estado == 'confirmada' %}
-                            <span class="res-badge res-badge-success w-100"><i class="ph-fill ph-check-circle"></i> Confirmada</span>
-                        {% elif r.estado == 'cancelada' %}
-                            <span class="res-badge res-badge-danger w-100"><i class="ph-fill ph-x-circle"></i> Cancelada</span>
-                        {% elif r.estado == 'no_asistida' %}
-                            <span class="res-badge res-badge-warning text-warning w-100" style="color: #fbbf24 !important;"><i class="ph-fill ph-warning-circle"></i> Falta</span>
-                        {% elif r.estado == 'asistida' %}
-                            <span class="res-badge res-badge-info w-100"><i class="ph-fill ph-user-check"></i> Asistió</span>
-                        {% else %}
-                            <span class="res-badge" style="background: rgba(255,255,255,0.05); color: var(--text-muted); width: 100%;">{{ r.get_estado_display }}</span>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- 5. Acciones -->
-                    <div class="res-action d-flex justify-content-end">
-                        {% if r.estado == 'confirmada' %}
-                            <a href="{% url 'marcar_no_asistida' r.id %}" class="btn-action-ghost" onclick="return confirm('¿Registrar inasistencia del usuario (penalización aplicable)?');" data-bs-toggle="tooltip" title="Registrar Falta (Inasistencia)">
-                                <i class="ph-light ph-user-minus fs-5"></i>
-                            </a>
-                        {% else %}
-                            <div style="width: 38px; height: 38px;"></div> <!-- Placeholder -->
-                        {% endif %}
-                    </div>
-                </div>
+        {% for r in reservas %}
+            {% if r.fecha == dia %}
+            <article class="agenda-event {{ r.estado }}">
+                <div class="agenda-time">{{ r.hora_inicio|time:"H:i" }} - {{ r.hora_fin|time:"H:i" }}</div>
+                <div class="agenda-title">{{ r.cancha.nombre }}</div>
+                <div class="agenda-user"><i class="bi bi-person me-1"></i>{{ r.usuario.nombre }}</div>
+                <div class="agenda-guests-meta"><i class="bi bi-people me-1"></i>{{ r.cantidad_total_personas }} persona{{ r.cantidad_total_personas|pluralize }} en total</div>
+                {% if r.tiene_invitados %}
+                <ul class="agenda-guest-list">
+                    {% for invitado in r.invitados_lista %}
+                    <li>{{ invitado }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="agenda-guest-empty">Sin acompañantes registrados.</div>
                 {% endif %}
-            {% endfor %}
-            
-            {% comment %} Hack de django para ver si hay reservas este día. Si quisiéramos ser exactos requeriría lógica en view, pero el fallback UI es aceptable {% endcomment %}
+                <div class="mt-2 d-flex align-items-center justify-content-between gap-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="badge badge-{{ r.estado }}">{{ r.get_estado_display }}</span>
+                        {% if r.estado == 'asistida' %}
+                        <span class="status-inline success"><i class="bi bi-check2-circle"></i>Visto</span>
+                        {% endif %}
+                    </div>
+                    {% if r.estado == 'confirmada' %}
+                    <a href="{% url 'marcar_no_asistida' r.id %}" class="btn btn-outline-secondary btn-sm" onclick="return confirm('¿Registrar inasistencia del usuario?');" data-bs-toggle="tooltip" title="Marcar no asistida"><i class="bi bi-person-dash"></i></a>
+                    {% endif %}
+                </div>
+            </article>
+            {% endif %}
+        {% endfor %}
+    </section>
+    {% endfor %}
+</div>
+{% else %}
+<div class="app-card day-agenda-list">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+        <div>
+            <div class="eyebrow mb-1">{{ fecha|date:"l"|title }}</div>
+            <h2 class="section-title mb-0">{{ fecha|date:"d M Y" }}</h2>
         </div>
+        <span class="badge bg-light text-secondary">Vista diaria</span>
+    </div>
+    {% for r in reservas %}
+    <article class="agenda-event {{ r.estado }}">
+        <div>
+            <div class="agenda-time">{{ r.hora_inicio|time:"H:i" }} - {{ r.hora_fin|time:"H:i" }}</div>
+            <small class="text-muted">Horario</small>
+        </div>
+        <div>
+            <div class="agenda-title">{{ r.cancha.nombre }}</div>
+            <div class="agenda-user">{{ r.cancha.tipo_deporte_label }} · {{ r.usuario.nombre }}</div>
+            <div class="agenda-guests-meta"><i class="bi bi-people me-1"></i>{{ r.cantidad_total_personas }} persona{{ r.cantidad_total_personas|pluralize }} en total</div>
+            {% if r.tiene_invitados %}
+            <ul class="agenda-guest-list mt-2">
+                {% for invitado in r.invitados_lista %}
+                <li>{{ invitado }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="agenda-guest-empty mt-2">Sin acompañantes registrados.</div>
+            {% endif %}
+        </div>
+        <div class="d-flex align-items-center gap-2 justify-content-end flex-wrap">
+            <span class="badge badge-{{ r.estado }}">{{ r.get_estado_display }}</span>
+            {% if r.estado == 'asistida' %}
+            <span class="status-inline success"><i class="bi bi-check2-circle"></i>Visto</span>
+            {% endif %}
+            {% if r.estado == 'confirmada' %}
+            <a href="{% url 'marcar_no_asistida' r.id %}" class="btn btn-outline-secondary btn-sm" onclick="return confirm('¿Registrar inasistencia del usuario?');"><i class="bi bi-person-dash"></i></a>
+            {% endif %}
+        </div>
+    </article>
+    {% empty %}
+    <div class="empty-state">
+        <div class="empty-icon"><i class="bi bi-calendar-x"></i></div>
+        <h3 class="section-title">No hay agenda</h3>
+        <p>No se registraron reservas para este día.</p>
     </div>
     {% endfor %}
-
-{% else %}
-    <!-- ─── VISTA DIARIA ─── -->
-    <div class="day-block">
-        <div class="day-header">
-            <div class="day-date-badge" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(56, 189, 248, 0.15)); border-color: rgba(16, 185, 129, 0.3); color: #34d399;">
-                <span class="day-num">{{ fecha|date:"d" }}</span>
-                <span class="day-month">{{ fecha|date:"M" }}</span>
-            </div>
-            <div>
-                <h3 class="fs-4 fw-semibold text-white mb-0">{{ fecha|date:"l"|title }}</h3>
-                <span class="text-muted fs-6">{{ fecha|date:"Y" }}</span>
-            </div>
-        </div>
-        
-        <div class="reservation-list">
-            {% for r in reservas %}
-                <div class="reservation-item">
-                    <!-- Hora -->
-                    <div class="res-time">
-                        {{ r.hora_inicio|time:"H:i" }} <span class="text-muted fw-normal fs-6 opacity-50">/</span> {{ r.hora_fin|time:"H:i" }}
-                    </div>
-                    <!-- Cancha -->
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="d-flex flex-column">
-                            <span class="fw-medium text-white d-flex align-items-center gap-1"><i class="ph-light ph-hexagon text-primary"></i> {{ r.cancha.nombre }}</span>
-                            <span class="text-muted fs-7">{{ r.cancha.get_tipo_deporte_display }}</span>
-                        </div>
-                    </div>
-                    <!-- Usuario -->
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="res-avatar">{{ r.usuario.nombre|make_list|first|upper }}</div>
-                        <span class="fw-medium text-muted">{{ r.usuario.nombre }}</span>
-                    </div>
-                    <!-- Estado -->
-                    <div>
-                        {% if r.estado == 'confirmada' %}
-                            <span class="res-badge res-badge-success w-100"><i class="ph-fill ph-check-circle"></i> Confirmada</span>
-                        {% elif r.estado == 'cancelada' %}
-                            <span class="res-badge res-badge-danger w-100"><i class="ph-fill ph-x-circle"></i> Cancelada</span>
-                        {% elif r.estado == 'no_asistida' %}
-                            <span class="res-badge res-badge-warning text-warning w-100" style="color: #fbbf24 !important;"><i class="ph-fill ph-warning-circle"></i> Falta</span>
-                        {% elif r.estado == 'asistida' %}
-                            <span class="res-badge res-badge-info w-100"><i class="ph-fill ph-user-check"></i> Asistió</span>
-                        {% else %}
-                            <span class="res-badge" style="background: rgba(255,255,255,0.05); color: var(--text-muted); width: 100%;">{{ r.get_estado_display }}</span>
-                        {% endif %}
-                    </div>
-                    <!-- Acción -->
-                    <div class="res-action d-flex justify-content-end">
-                        {% if r.estado == 'confirmada' %}
-                            <a href="{% url 'marcar_no_asistida' r.id %}" class="btn-action-ghost" onclick="return confirm('¿Registrar inasistencia del usuario?');" data-bs-toggle="tooltip" title="Registrar Falta">
-                                <i class="ph-light ph-user-minus fs-5"></i>
-                            </a>
-                        {% endif %}
-                    </div>
-                </div>
-            {% empty %}
-                <div class="text-center py-5">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 64px; height: 64px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle);">
-                        <i class="ph-light ph-calendar-x text-muted" style="font-size: 2rem;"></i>
-                    </div>
-                    <h5 class="text-white fw-medium">No hay agenda</h5>
-                    <p class="text-muted">No se registraron reservas para este día.</p>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
+</div>
 {% endif %}
 {% endblock %}

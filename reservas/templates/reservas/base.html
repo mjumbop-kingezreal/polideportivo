@@ -1,177 +1,206 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="es" data-bs-theme="dark">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block titulo %}Polideportivo Premium{% endblock %}</title>
-    
-    <!-- Tipografía Inter y Plus Jakarta Sans -->
+    <title>{% block titulo %}Sistema de Reservas - Polideportivo{% endblock %}</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet">
-    
-    <!-- Bootstrap 5 CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Phosphor Icons -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-       <!-- CSS Personalizado -->
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20260705e">
+    {% block extra_css %}{% endblock %}
 </head>
-<body>
-
+<body class="{% if usuario %}app-body{% else %}auth-body{% endif %}">
     {% if usuario %}
-    <!-- Navbar Flotante tipo Pill -->
-    <div class="navbar-pill-container">
-        <nav class="navbar navbar-expand-lg navbar-pill">
-            <div class="container-fluid px-0">
-                <a class="navbar-brand brand-logo m-0 p-0 pe-4 border-end border-secondary border-opacity-25" href="{% url 'lista_canchas' %}">
-                    <i class="ph-light ph-hexagon"></i> 
-                    <span class="brand-text ms-2 fs-5 fw-bold text-white">Poly</span>
-                </a>
-                
-                <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCore">
-                    <i class="ph ph-list text-white fs-2"></i>
-                </button>
-                
-                <div class="collapse navbar-collapse ps-lg-4" id="navbarCore">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'lista_canchas' %}"><i class="ph-light ph-squares-four"></i> Canchas</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'disponibilidad' %}"><i class="ph-light ph-calendar-check"></i> Disponibilidad</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'crear_reserva' %}"><i class="ph-light ph-plus-circle"></i> Reservar</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'mis_reservas' %}"><i class="ph-light ph-bookmarks"></i> Mis Reservas</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'canjear_puntos' %}"><i class="ph-light ph-shooting-star" style="color: var(--brand-accent)"></i> Puntos</a>
-                        </li>
-
-                        {% if usuario.rol == 'recepcionista' or usuario.rol == 'administrador' %}
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                    <i class="ph-light ph-buildings"></i> Recepción
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{% url 'validar_qr' %}"><i class="ph-light ph-qr-code"></i> Validar QR</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'calendario_reservas' %}"><i class="ph-light ph-calendar-blank"></i> Calendario</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'historial_reservas' %}"><i class="ph-light ph-clock-counter-clockwise"></i> Historial</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'crear_reserva_recepcion' %}"><i class="ph-light ph-calendar-plus"></i> Manual</a></li>
-                                </ul>
-                            </li>
-                        {% endif %}
-
-                        {% if usuario.rol == 'administrador' %}
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                    <i class="ph-light ph-shield-check"></i> Admin
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{% url 'admin_usuarios' %}"><i class="ph-light ph-users"></i> Usuarios</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'admin_canchas' %}"><i class="ph-light ph-tennis-ball"></i> Canchas</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'admin_horarios' %}"><i class="ph-light ph-clock"></i> Horarios</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'admin_config_puntos' %}"><i class="ph-light ph-sliders"></i> Puntos</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'reportes' %}"><i class="ph-light ph-chart-line-up"></i> Reportes</a></li>
-                                </ul>
-                            </li>
-                        {% endif %}
-                        
-                        {% if usuario.rol == 'municipio' %}
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                    <i class="ph-light ph-bank"></i> Municipio
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{% url 'reportes' %}"><i class="ph-light ph-chart-line-up"></i> Reportes</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'admin_config_puntos' %}"><i class="ph-light ph-sliders"></i> Puntos</a></li>
-                                </ul>
-                            </li>
-                        {% endif %}
-                    </ul>
-                    
-                    <div class="d-flex align-items-center gap-3 ms-lg-3 mt-3 mt-lg-0 border-start-lg border-secondary border-opacity-25 ps-lg-4">
-                        <a href="{% url 'perfil' %}" class="text-decoration-none d-flex align-items-center gap-2">
-                            <div class="user-avatar" title="{{ usuario.get_rol_display }}">
-                                {{ usuario.nombre|make_list|first|upper }}
-                            </div>
-                            <span class="text-white fw-medium d-lg-none d-xl-block" style="font-size: 0.9rem;">{{ usuario.nombre|truncatechars:12 }}</span>
-                        </a>
-                        <a href="{% url 'logout' %}" class="btn btn-sm text-muted hover-scale" style="background: var(--surface-lvl1); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;" title="Cerrar Sesión">
-                            <i class="ph-light ph-sign-out fs-5"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </nav>
+    <div class="mobile-topbar d-lg-none">
+        <button class="icon-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-label="Abrir menu">
+            <i class="bi bi-list"></i>
+        </button>
+        <a class="mobile-brand" href="{% url 'lista_canchas' %}">
+            <span class="brand-mark"><img src="{% static 'img/polireserva-logo.png' %}" alt="Logo PoliReserva"></span>
+            PoliReserva
+        </a>
+        <a href="{% url 'perfil' %}" class="avatar avatar-sm">{{ usuario.nombre|make_list|first|upper }}</a>
     </div>
+
+    <aside class="app-sidebar d-none d-lg-flex">
+        <a class="sidebar-brand" href="{% url 'lista_canchas' %}">
+            <span class="brand-mark"><img src="{% static 'img/polireserva-logo.png' %}" alt="Logo PoliReserva"></span>
+            <span class="brand-copy">
+                <strong>PoliReserva</strong>
+                <small>Sistema de reservas deportivas</small>
+            </span>
+        </a>
+
+        <nav class="sidebar-nav">
+            <a href="{% url 'lista_canchas' %}" class="sidebar-link {% if request.resolver_match.url_name == 'lista_canchas' %}active{% endif %}">
+                <i class="bi bi-grid-1x2-fill"></i><span>Canchas</span>
+            </a>
+            <a href="{% url 'disponibilidad' %}" class="sidebar-link {% if request.resolver_match.url_name == 'disponibilidad' %}active{% endif %}">
+                <i class="bi bi-calendar2-week"></i><span>Disponibilidad</span>
+            </a>
+            <a href="{% url 'mis_reservas' %}" class="sidebar-link {% if request.resolver_match.url_name == 'mis_reservas' %}active{% endif %}">
+                <i class="bi bi-ticket-perforated"></i><span>Mis reservas</span>
+            </a>
+            <a href="{% url 'canjear_puntos' %}" class="sidebar-link {% if request.resolver_match.url_name == 'canjear_puntos' %}active{% endif %}">
+                <i class="bi bi-stars"></i><span>Puntos</span>
+            </a>
+            <a href="{% url 'perfil' %}" class="sidebar-link {% if request.resolver_match.url_name == 'perfil' %}active{% endif %}">
+                <i class="bi bi-person-circle"></i><span>Perfil</span>
+            </a>
+
+            {% if usuario.rol == 'recepcionista' or usuario.rol == 'administrador' %}
+            <div class="sidebar-section">Recepcion</div>
+            <a href="{% url 'validar_qr' %}" class="sidebar-link {% if request.resolver_match.url_name == 'validar_qr' %}active{% endif %}">
+                <i class="bi bi-qr-code-scan"></i><span>Validar QR</span>
+            </a>
+            <a href="{% url 'calendario_reservas' %}" class="sidebar-link {% if request.resolver_match.url_name == 'calendario_reservas' %}active{% endif %}">
+                <i class="bi bi-calendar-event"></i><span>Agenda</span>
+            </a>
+            <a href="{% url 'historial_reservas' %}" class="sidebar-link {% if request.resolver_match.url_name == 'historial_reservas' %}active{% endif %}">
+                <i class="bi bi-clock-history"></i><span>Historial</span>
+            </a>
+            <a href="{% url 'crear_reserva_recepcion' %}" class="sidebar-link {% if request.resolver_match.url_name == 'crear_reserva_recepcion' %}active{% endif %}">
+                <i class="bi bi-person-plus"></i><span>Reserva manual</span>
+            </a>
+            {% endif %}
+
+            {% if usuario.rol == 'administrador' %}
+            <div class="sidebar-section">Administracion</div>
+            <a href="{% url 'admin_usuarios' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_usuarios' %}active{% endif %}">
+                <i class="bi bi-people"></i><span>Usuarios</span>
+            </a>
+            <a href="{% url 'admin_canchas' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_canchas' %}active{% endif %}">
+                <i class="bi bi-shield-check"></i><span>Canchas</span>
+            </a>
+            <a href="{% url 'admin_horarios' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_horarios' %}active{% endif %}">
+                <i class="bi bi-stopwatch"></i><span>Horarios</span>
+            </a>
+            <a href="{% url 'admin_config_puntos' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_config_puntos' %}active{% endif %}">
+                <i class="bi bi-sliders"></i><span>Config. puntos</span>
+            </a>
+            <a href="{% url 'admin_productos_bar' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_productos_bar' %}active{% endif %}"><i class="bi bi-cup-hot"></i><span>Productos Bar</span></a>
+            <a href="{% url 'reportes' %}" class="sidebar-link {% if request.resolver_match.url_name == 'reportes' %}active{% endif %}">
+                <i class="bi bi-bar-chart-line"></i><span>Reportes</span>
+            </a>
+            {% endif %}
+
+            {% if usuario.rol == 'municipio' %}
+            <div class="sidebar-section">Municipio</div>
+            <a href="{% url 'reportes' %}" class="sidebar-link {% if request.resolver_match.url_name == 'reportes' %}active{% endif %}">
+                <i class="bi bi-bar-chart-line"></i><span>Reportes</span>
+            </a>
+            <a href="{% url 'admin_config_puntos' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_config_puntos' %}active{% endif %}">
+                <i class="bi bi-sliders"></i><span>Config. puntos</span>
+            </a>
+            {% endif %}
+        </nav>
+
+        <div class="sidebar-user">
+            <a href="{% url 'perfil' %}" class="sidebar-user-card">
+                <span class="avatar">{{ usuario.nombre|make_list|first|upper }}</span>
+                <span class="min-w-0">
+                    <strong>{{ usuario.nombre }}</strong>
+                    <small>{{ usuario.get_rol_display }}</small>
+                </span>
+            </a>
+            <a href="{% url 'logout' %}" class="logout-btn" title="Cerrar sesion"><i class="bi bi-box-arrow-right"></i></a>
+        </div>
+    </aside>
+
+    <div class="offcanvas offcanvas-start mobile-sidebar" tabindex="-1" id="mobileSidebar">
+        <div class="offcanvas-header">
+            <a class="sidebar-brand" href="{% url 'lista_canchas' %}">
+                <span class="brand-mark"><img src="{% static 'img/polireserva-logo.png' %}" alt="Logo PoliReserva"></span>
+                <span class="brand-copy"><strong>PoliReserva</strong><small>Reservas deportivas</small></span>
+            </a>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+        </div>
+        <div class="offcanvas-body">
+            <nav class="sidebar-nav">
+                <a href="{% url 'lista_canchas' %}" class="sidebar-link"><i class="bi bi-grid-1x2-fill"></i><span>Canchas</span></a>
+                <a href="{% url 'disponibilidad' %}" class="sidebar-link"><i class="bi bi-calendar2-week"></i><span>Disponibilidad</span></a>
+                <a href="{% url 'mis_reservas' %}" class="sidebar-link"><i class="bi bi-ticket-perforated"></i><span>Mis reservas</span></a>
+                <a href="{% url 'canjear_puntos' %}" class="sidebar-link"><i class="bi bi-stars"></i><span>Puntos</span></a>
+                <a href="{% url 'perfil' %}" class="sidebar-link"><i class="bi bi-person-circle"></i><span>Perfil</span></a>
+                {% if usuario.rol == 'recepcionista' or usuario.rol == 'administrador' %}
+                <div class="sidebar-section">Recepcion</div>
+                <a href="{% url 'validar_qr' %}" class="sidebar-link"><i class="bi bi-qr-code-scan"></i><span>Validar QR</span></a>
+                <a href="{% url 'calendario_reservas' %}" class="sidebar-link"><i class="bi bi-calendar-event"></i><span>Agenda</span></a>
+                <a href="{% url 'historial_reservas' %}" class="sidebar-link"><i class="bi bi-clock-history"></i><span>Historial</span></a>
+                <a href="{% url 'crear_reserva_recepcion' %}" class="sidebar-link"><i class="bi bi-person-plus"></i><span>Reserva manual</span></a>
+                {% endif %}
+                {% if usuario.rol == 'administrador' %}
+                <div class="sidebar-section">Administracion</div>
+                <a href="{% url 'admin_usuarios' %}" class="sidebar-link"><i class="bi bi-people"></i><span>Usuarios</span></a>
+                <a href="{% url 'admin_canchas' %}" class="sidebar-link"><i class="bi bi-shield-check"></i><span>Canchas</span></a>
+                <a href="{% url 'admin_horarios' %}" class="sidebar-link"><i class="bi bi-stopwatch"></i><span>Horarios</span></a>
+                <a href="{% url 'admin_config_puntos' %}" class="sidebar-link"><i class="bi bi-sliders"></i><span>Config. puntos</span></a>
+                <a href="{% url 'admin_productos_bar' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_productos_bar' %}active{% endif %}"><i class="bi bi-cup-hot"></i><span>Productos Bar</span></a>
+                <a href="{% url 'reportes' %}" class="sidebar-link"><i class="bi bi-bar-chart-line"></i><span>Reportes</span></a>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+
+    <main class="app-main">
+        <header class="topbar d-none d-lg-flex">
+<div class="topbar-actions">
+                <a href="{% url 'disponibilidad' %}" class="btn btn-soft"><i class="bi bi-calendar2-week me-2"></i>Disponibilidad</a>
+                <a href="{% url 'perfil' %}" class="btn btn-soft"><i class="bi bi-person-circle me-2"></i>Perfil</a>
+                <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right me-1"></i>Salir</a>
+            </div>
+        </header>
+        <section class="content-shell">
+    {% else %}
+    <main class="auth-main">
     {% endif %}
 
-    <main class="container mb-5">
-        {% block contenido %}{% endblock %}
-    </main>
+    {% block contenido %}{% endblock %}
 
-    <!-- Sistema Inmersivo de Toasts -->
-    <div class="toast-container-fixed" aria-live="polite" aria-atomic="true">
+    {% if usuario %}
+        </section>
+    </main>
+    {% else %}
+    </main>
+    {% endif %}
+
+    <div class="toast-stack">
         {% if messages %}
             {% for message in messages %}
-                <div class="toast toast-premium align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
-                    <div class="d-flex">
-                        <div class="toast-body d-flex align-items-center gap-3 py-3">
-                            {% if message.tags == 'success' %}
-                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: rgba(16, 185, 129, 0.1); color: #10b981;">
-                                    <i class="ph-fill ph-check-circle fs-5"></i>
-                                </div>
-                            {% elif message.tags == 'error' or message.tags == 'danger' %}
-                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: rgba(239, 68, 68, 0.1); color: #ef4444;">
-                                    <i class="ph-fill ph-warning-circle fs-5"></i>
-                                </div>
-                            {% elif message.tags == 'warning' %}
-                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
-                                    <i class="ph-fill ph-warning fs-5"></i>
-                                </div>
-                            {% else %}
-                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: rgba(99, 102, 241, 0.1); color: var(--brand-primary);">
-                                    <i class="ph-fill ph-info fs-5"></i>
-                                </div>
-                            {% endif %}
-                            <span class="fs-6 fw-medium text-white">{{ message }}</span>
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto opacity-50 hover-scale" data-bs-dismiss="toast"></button>
-                    </div>
+            <div class="toast app-toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-body">
+                    {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill text-success"></i>
+                    {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="bi bi-x-circle-fill text-danger"></i>
+                    {% elif message.tags == 'warning' %}<i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                    {% else %}<i class="bi bi-info-circle-fill text-primary"></i>{% endif %}
+                    <span>{{ message }}</span>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
                 </div>
+            </div>
             {% endfor %}
         {% endif %}
     </div>
 
-    <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Inicialización de Toasts y Tooltips -->
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Inicializar Toasts
-            var toastElList = [].slice.call(document.querySelectorAll('.toast'))
-            var toastList = toastElList.map(function (toastEl) {
-                var toast = new bootstrap.Toast(toastEl)
-                toast.show()
-                return toast
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.toast').forEach(function (toastEl) {
+                new bootstrap.Toast(toastEl, { delay: 5200 }).show();
             });
-            
-            // Inicializar Tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl)
+            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+                new bootstrap.Tooltip(el);
             });
         });
     </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
+
+
+
+

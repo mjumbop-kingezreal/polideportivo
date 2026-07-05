@@ -4,9 +4,12 @@ from .models import (
     Cancha,
     HorarioDisponible,
     Reserva,
+    ReservaBloqueo,
     PuntosHistorial,
     LogErrores,
     ConfiguracionPuntos,
+    ProductoBar,
+    CanjeProducto,
 )
 
 
@@ -37,6 +40,13 @@ class ReservaAdmin(admin.ModelAdmin):
     search_fields = ('usuario__nombre', 'cancha__nombre')
 
 
+@admin.register(ReservaBloqueo)
+class ReservaBloqueoAdmin(admin.ModelAdmin):
+    list_display = ('cancha', 'fecha', 'hora_inicio', 'hora_fin', 'reserva')
+    list_filter = ('fecha', 'cancha')
+    search_fields = ('cancha__nombre', 'reserva__usuario__nombre')
+
+
 @admin.register(PuntosHistorial)
 class PuntosHistorialAdmin(admin.ModelAdmin):
     list_display = ('usuario', 'puntos', 'tipo_movimiento', 'fecha')
@@ -52,4 +62,18 @@ class LogErroresAdmin(admin.ModelAdmin):
 
 @admin.register(ConfiguracionPuntos)
 class ConfiguracionPuntosAdmin(admin.ModelAdmin):
-    list_display = ('puntos_por_asistencia', 'minimo_canje')
+    list_display = ('puntos_por_asistencia',)
+
+
+@admin.register(ProductoBar)
+class ProductoBarAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'categoria', 'puntos_requeridos', 'disponible')
+    list_filter = ('categoria', 'disponible')
+    search_fields = ('nombre',)
+
+
+@admin.register(CanjeProducto)
+class CanjeProductoAdmin(admin.ModelAdmin):
+    list_display = ('codigo', 'usuario', 'producto', 'puntos_usados', 'estado', 'fecha')
+    list_filter = ('estado', 'fecha')
+    search_fields = ('codigo', 'usuario__nombre', 'producto__nombre')

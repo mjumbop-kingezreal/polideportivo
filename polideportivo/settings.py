@@ -24,9 +24,12 @@ SECRET_KEY = 'django-insecure-ybhr4@budm&iqzxxsa9aec-eq9b^+5u*pz0h9(&%1a@(6b=1j1
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.ngrok-free.dev',
+    'https://*.ngrok.io',
+    'https://*.ngrok.app',
+]
 
 # Application definition
 
@@ -84,9 +87,6 @@ DATABASES = {
         'PASSWORD': 'davidj741',
         'OPTIONS': {
             'charset': 'utf8mb4',
-            # IMPORTANTE: MySQL debe usar InnoDB (default desde MySQL 5.5+)
-            # para que select_for_update() funcione correctamente en las
-            # transacciones atómicas de reservas.
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
     }

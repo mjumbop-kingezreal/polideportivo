@@ -1,13 +1,31 @@
-{% extends 'reservas/base.html' %}
+﻿{% extends 'reservas/base.html' %}
 
 {% block titulo %}Mis Reservas - Polideportivo{% endblock %}
 
 {% block contenido %}
-<h1 class="page-title">Mis Reservas</h1>
+<div class="page-header">
+    <div>
+        <div class="eyebrow">Mi actividad</div>
+        <h1 class="page-title">Mis reservas</h1>
+        <p class="page-subtitle">Ahora el estado refleja mejor si asististe, faltaste o todavia puedes cancelar una reserva futura.</p>
+    </div>
+    <a href="{% url 'disponibilidad' %}" class="btn btn-primary"><i class="bi bi-calendar2-week me-2"></i>Buscar disponibilidad</a>
+</div>
 
-<div class="card">
+<div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-icon"><i class="bi bi-ticket-perforated"></i></div><div class="kpi-value">{{ resumen.total }}</div><div class="kpi-label">Reservas registradas</div></div>
+    <div class="kpi-card"><div class="kpi-icon"><i class="bi bi-calendar-check"></i></div><div class="kpi-value">{{ resumen.futuras }}</div><div class="kpi-label">Futuras y cancelables</div></div>
+    <div class="kpi-card"><div class="kpi-icon"><i class="bi bi-check2-circle"></i></div><div class="kpi-value">{{ resumen.asistidas }}</div><div class="kpi-label">Asistidas</div></div>
+    <div class="kpi-card"><div class="kpi-icon"><i class="bi bi-x-octagon"></i></div><div class="kpi-value">{{ resumen.no_asistidas }}</div><div class="kpi-label">No asistidas</div></div>
+</div>
+
+<div class="table-card">
+    <div class="table-toolbar">
+        <h2 class="section-title mb-0">Reservas registradas</h2>
+        <span class="badge bg-light text-secondary">{{ reservas.paginator.count|default:0 }} total</span>
+    </div>
     <div class="table-responsive-custom">
-        <table>
+        <table class="table mb-0">
             <thead>
                 <tr>
                     <th>#</th>
@@ -16,116 +34,111 @@
                     <th>Horario</th>
                     <th>Estado</th>
                     <th>QR</th>
-                    <th>Acción</th>
+                    <th>Accion</th>
                 </tr>
             </thead>
             <tbody>
                 {% for r in reservas %}
                 <tr>
-                    <td>{{ r.id }}</td>
-                    <td>{{ r.cancha.nombre }}</td>
-                    <td>{{ r.fecha }}</td>
+                    <td class="fw-bold text-muted">#{{ r.id }}</td>
+                    <td><span class="table-avatar"><i class="bi bi-trophy"></i></span>{{ r.cancha.nombre }}</td>
+                    <td>{{ r.fecha|date:"d/m/Y" }}</td>
                     <td>{{ r.hora_inicio|time:"H:i" }} - {{ r.hora_fin|time:"H:i" }}</td>
-                    <td><span class="badge badge-{{ r.estado }}">{{ r.get_estado_display }}</span></td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#qrModal{{ r.id }}">
-                            <i class="ph-light ph-qr-code"></i> Ver QR
+                        <span class="badge badge-{{ r.estado_visual }}">{{ r.estado_visual_display }}</span>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-soft btn-sm" data-bs-toggle="modal" data-bs-target="#qrModal{{ r.id }}">
+                            <i class="bi bi-qr-code me-1"></i>Ver QR
                         </button>
                     </td>
                     <td>
-                        {% if r.estado == 'confirmada' %}
-                            <a href="{% url 'cancelar_reserva' r.id %}"
-                               class="btn btn-sm btn-danger"
-                               onclick="return confirm('¿Cancelar esta reserva?');">
-                                Cancelar
-                            </a>
+                        {% if r.can_cancel %}
+                        <a href="{% url 'cancelar_reserva' r.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Â¿Cancelar esta reserva?');">
+                            <i class="bi bi-x-circle me-1"></i>Cancelar reserva
+                        </a>
+                        {% elif r.estado_visual == 'asistida' %}
+                        <span class="status-inline success"><i class="bi bi-check2-circle"></i>Asistida</span>
+                        {% elif r.estado_visual == 'no_asistida' %}
+                        <span class="status-inline danger"><i class="bi bi-x-octagon"></i>No asistio</span>
+                        {% elif r.estado_visual == 'cancelada' %}
+                        <span class="status-inline muted"><i class="bi bi-slash-circle"></i>Cancelada</span>
                         {% else %}
-                            —
+                        <span class="status-inline muted"><i class="bi bi-hourglass-split"></i>Sin accion</span>
                         {% endif %}
                     </td>
                 </tr>
                 {% empty %}
-                <tr>
-                    <td colspan="7" style="color:#888; text-align:center;">No tienes reservas.</td>
-                </tr>
+                <tr><td colspan="7"><div class="empty-state"><div class="empty-icon"><i class="bi bi-calendar-x"></i></div><p>No tienes reservas todavia.</p></div></td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <!-- Paginación -->
     {% if reservas.has_other_pages %}
-    <div class="pagination-container p-3 border-top border-secondary border-opacity-25">
-        <nav aria-label="Navegación de páginas">
+    <div class="pagination-container">
+        <nav aria-label="Paginacion reservas">
             <ul class="pagination pagination-sm mb-0">
                 {% if reservas.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page=1">&laquo;</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ reservas.previous_page_number }}">&lsaquo;</a>
-                    </li>
+                <li class="page-item"><a class="page-link" href="?page=1">&laquo;</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ reservas.previous_page_number }}">&lsaquo;</a></li>
                 {% else %}
-                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-                    <li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                <li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>
                 {% endif %}
-
                 {% for i in reservas.paginator.page_range %}
-                    {% if reservas.number == i %}
-                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
-                    {% elif i > reservas.number|add:'-3' and i < reservas.number|add:'3' %}
-                        <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
-                    {% endif %}
+                    {% if reservas.number == i %}<li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                    {% elif i > reservas.number|add:'-3' and i < reservas.number|add:'3' %}<li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>{% endif %}
                 {% endfor %}
-
                 {% if reservas.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ reservas.next_page_number }}">&rsaquo;</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ reservas.paginator.num_pages }}">&raquo;</a>
-                    </li>
+                <li class="page-item"><a class="page-link" href="?page={{ reservas.next_page_number }}">&rsaquo;</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ reservas.paginator.num_pages }}">&raquo;</a></li>
                 {% else %}
-                    <li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>
-                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                <li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
                 {% endif %}
             </ul>
         </nav>
-        <div class="pagination-info w-100">
-            Página {{ reservas.number }} de {{ reservas.paginator.num_pages }} ({{ reservas.paginator.count }} reservas)
-        </div>
+        <div class="pagination-info">Pagina {{ reservas.number }} de {{ reservas.paginator.num_pages }} ({{ reservas.paginator.count }} reservas)</div>
     </div>
     {% endif %}
 </div>
 
-<!-- Modales renderizados fuera de la tabla para evitar problemas de z-index -->
 {% for r in reservas %}
 <div class="modal fade" id="qrModal{{ r.id }}" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background: rgba(15, 15, 18, 0.95); border: 1px solid var(--border-glass);">
-      <div class="modal-header border-bottom border-secondary border-opacity-25">
-        <h5 class="modal-title text-white">Código de Acceso</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-center p-4">
-        <div class="bg-white p-3 rounded-3 d-inline-block mb-3">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ r.codigo_qr }}" alt="Código QR" class="img-fluid" width="200" height="200">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-qr-code me-2 text-success"></i>C?digo de acceso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div class="bg-white border rounded-4 p-3 d-inline-block shadow-sm mb-3">
+                    <img src="{% url 'generar_qr' r.codigo_qr %}" alt="C?digo QR" width="220" height="220">
+                </div>
+                <div class="app-card text-start shadow-none">
+                    <div class="summary-row"><span>Cancha</span><strong>{{ r.cancha.nombre }}</strong></div>
+                    <div class="summary-row"><span>Fecha</span><strong>{{ r.fecha|date:"d/m/Y" }}</strong></div>
+                    <div class="summary-row"><span>Horario</span><strong>{{ r.hora_inicio|time:"H:i" }} - {{ r.hora_fin|time:"H:i" }}</strong></div>
+                    <div class="summary-row"><span>Estado</span><strong>{{ r.estado_visual_display }}</strong></div>
+                    <div class="summary-row"><span>Total del grupo</span><strong>{{ r.cantidad_total_personas }} persona{{ r.cantidad_total_personas|pluralize }}</strong></div>
+                    <div class="summary-row"><span>Código</span><strong class="text-break">{{ r.codigo_qr }}</strong></div>
+                    {% if r.tiene_invitados %}
+                    <div class="guest-summary mt-3">
+                        <div class="guest-summary-label">Acompañantes registrados</div>
+                        <ul class="guest-summary-list">
+                            {% for invitado in r.invitados_lista %}
+                            <li>{{ invitado }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        
-        <div class="text-start mt-3 p-3 rounded" style="background: rgba(255,255,255,0.05);">
-            <p class="mb-2"><strong>Cancha:</strong> {{ r.cancha.nombre }}</p>
-            <p class="mb-2"><strong>Fecha:</strong> {{ r.fecha|date:"d/m/Y" }}</p>
-            <p class="mb-2"><strong>Horario:</strong> {{ r.hora_inicio|time:"H:i" }} - {{ r.hora_fin|time:"H:i" }}</p>
-            <hr class="border-secondary border-opacity-50">
-            <p class="mb-0 text-muted small text-center" style="word-break: break-all;">
-                <strong>Código UUID:</strong><br>
-                <span class="text-white font-monospace">{{ r.codigo_qr }}</span>
-            </p>
-        </div>
-      </div>
     </div>
-  </div>
 </div>
 {% endfor %}
-
 {% endblock %}
+
+

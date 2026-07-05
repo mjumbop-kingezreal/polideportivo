@@ -3,64 +3,74 @@
 {% block titulo %}Historial - Polideportivo{% endblock %}
 
 {% block contenido %}
-<h1 class="mb-4">Historial de Reservas</h1>
+<div class="page-header">
+    <div>
+        <div class="eyebrow">Recepcion</div>
+        <h1 class="page-title">Historial en calendario</h1>
+        
+    </div>
+</div>
 
-<!-- Filtros compactos en grid responsivo -->
-<div class="card p-4 mb-4">
-    <form method="get">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label">
-                    <i class="bi bi-search me-2 text-muted"></i>Buscar por Usuario
-                </label>
-                <input type="text" name="q" class="form-control" placeholder="Nombre o correo..." value="{{ busqueda }}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">
-                    <i class="bi bi-calendar-event me-2 text-muted"></i>Fecha
-                </label>
-                <input type="date" name="fecha" class="form-control" value="{{ fecha }}">
-            </div>
-            <div class="col-md-4">
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-funnel me-2"></i>Filtrar
-                </button>
-            </div>
+<div class="filter-panel">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-lg-5">
+            <label class="form-label"><i class="bi bi-search me-1"></i>Buscar por usuario</label>
+            <input type="text" name="q" class="form-control" placeholder="Nombre o correo..." value="{{ busqueda }}">
+        </div>
+        <div class="col-lg-3">
+            <label class="form-label"><i class="bi bi-calendar-month me-1"></i>Mes</label>
+            <input type="month" name="mes" class="form-control" value="{{ mes }}">
+        </div>
+        <div class="col-lg-2">
+            <label class="form-label"><i class="bi bi-calendar-day me-1"></i>Fecha exacta</label>
+            <input type="date" name="fecha" class="form-control" value="{{ fecha }}">
+        </div>
+        <div class="col-lg-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i>Ver</button>
+            <a href="{% url 'historial_reservas' %}" class="btn btn-soft">Limpiar</a>
         </div>
     </form>
 </div>
 
-<!-- Tabla de historial -->
-<div class="card p-4">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Usuario</th>
-                    <th>Cancha</th>
-                    <th>Fecha</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in reservas %}
-                <tr>
-                    <td>#{{ r.id }}</td>
-                    <td>{{ r.usuario.nombre }}</td>
-                    <td>{{ r.cancha.nombre }}</td>
-                    <td>
-                        <i class="bi bi-calendar3 me-1 text-muted"></i>{{ r.fecha|date:"d/m/Y" }} {{ r.hora_inicio|time:"H:i" }}
-                    </td>
-                    <td><span class="badge badge-{{ r.estado }}">{{ r.get_estado_display }}</span></td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center py-5 text-muted">No se encontraron registros.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="calendar-history-header">
+    <a href="?mes={{ mes_anterior }}{% if busqueda %}&q={{ busqueda }}{% endif %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-left"></i></a>
+    <div class="text-center">
+        <div class="eyebrow mb-1">Historial mensual</div>
+        <h2 class="section-title mb-0">{{ mes_label }}</h2>
+        <p class="text-muted mb-0">{{ total_reservas_mes }} reserva{{ total_reservas_mes|pluralize }} encontrada{{ total_reservas_mes|pluralize }}</p>
+    </div>
+    <a href="?mes={{ mes_siguiente }}{% if busqueda %}&q={{ busqueda }}{% endif %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-right"></i></a>
+</div>
+
+<div class="history-calendar-shell">
+    <div class="history-calendar-head">
+        {% for nombre in nombres_dias %}
+        <div class="history-calendar-weekday">{{ nombre }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="history-calendar-grid">
+        {% for semana in calendario_mes %}
+            {% for dia in semana %}
+            <div class="history-calendar-cell {% if not dia.en_mes %}is-outside{% endif %} {% if dia.es_hoy %}is-today{% endif %}">
+                <div class="history-calendar-date">{{ dia.fecha|date:"d" }}</div>
+                <div class="history-calendar-events">
+                    {% if dia.reservas %}
+                        {% for reserva in dia.reservas %}
+                        <article class="history-event-card {{ reserva.estado }}">
+                            <div class="history-event-time">{{ reserva.hora_inicio|time:"H:i" }} - {{ reserva.hora_fin|time:"H:i" }}</div>
+                            <div class="history-event-title">{{ reserva.cancha.nombre }}</div>
+                            <div class="history-event-user">{{ reserva.usuario.nombre }}</div>
+                            <span class="badge badge-{{ reserva.estado }} mt-2">{{ reserva.get_estado_display }}</span>
+                        </article>
+                        {% endfor %}
+                    {% elif dia.en_mes %}
+                    <div class="history-calendar-empty">Sin reservas</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

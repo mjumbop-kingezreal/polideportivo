@@ -3,103 +3,71 @@
 {% block titulo %}Gestión de Usuarios - Polideportivo{% endblock %}
 
 {% block contenido %}
-<h1 class="page-title">Gestión de Usuarios</h1>
+<div class="page-header">
+    <div>
+        <div class="eyebrow">Administración</div>
+        <h1 class="page-title">Gestión de usuarios</h1>
+        <p class="page-subtitle">Administra roles, estado de cuentas y permisos operativos.</p>
+    </div>
+</div>
 
-<div class="card" style="padding: 1.5rem;">
+<div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-icon"><i class="bi bi-people"></i></div><div class="kpi-value">{{ usuarios.paginator.count|default:0 }}</div><div class="kpi-label">Usuarios registrados</div></div>
+</div>
+
+<div class="table-card">
+    <div class="table-toolbar"><h2 class="section-title mb-0">Listado de usuarios</h2></div>
     <div class="table-responsive-custom">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Correo</th>
-                    <th>Teléfono</th>
-                    <th>Rol</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
+        <table class="table mb-0">
+            <thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
             <tbody>
-                {% for u in usuarios %}
-                <tr>
-                    <td>{{ u.nombre }}</td>
-                    <td>{{ u.correo }}</td>
-                    <td>{{ u.telefono|default:"-" }}</td>
-                    <td>
-                        <form method="post" style="display:inline-flex; gap:0.5rem;">
-                            {% csrf_token %}
-                            <input type="hidden" name="accion" value="cambiar_rol">
-                            <input type="hidden" name="usuario_id" value="{{ u.id }}">
-                            <select name="rol" class="form-control" style="width: auto; padding: 0.2rem;" onchange="this.form.submit()" {% if u.id == request.usuario.id %}disabled{% endif %}>
-                                <option value="usuario" {% if u.rol == 'usuario' %}selected{% endif %}>Usuario</option>
-                                <option value="recepcionista" {% if u.rol == 'recepcionista' %}selected{% endif %}>Recepcionista</option>
-                                <option value="administrador" {% if u.rol == 'administrador' %}selected{% endif %}>Admin</option>
-                            </select>
-                        </form>
-                    </td>
-                    <td><span class="badge badge-{{ u.estado }}">{{ u.get_estado_display }}</span></td>
-                    <td>
-                        <form method="post" style="display:inline;">
-                            {% csrf_token %}
-                            <input type="hidden" name="accion" value="toggle_estado">
-                            <input type="hidden" name="usuario_id" value="{{ u.id }}">
-                            {% if u.id == request.usuario.id %}
-                                <button type="button" class="btn btn-outline" disabled>Tú</button>
-                            {% else %}
-                                <button type="submit" class="btn btn-primary" onclick="return confirm('¿Cambiar estado de este usuario?');">
-                                    {% if u.estado == 'activo' %}Desactivar{% else %}Activar{% endif %}
-                                </button>
-                            {% endif %}
-                        </form>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="6" style="text-align:center;">No hay usuarios.</td></tr>
-                {% endfor %}
+            {% for u in usuarios %}
+            <tr>
+                <td><span class="table-avatar">{{ u.nombre|make_list|first|upper }}</span><strong>{{ u.nombre }}</strong></td>
+                <td>{{ u.correo }}</td>
+                <td>{{ u.telefono|default:"-" }}</td>
+                <td>
+                    <form method="post" class="d-inline-flex gap-2 align-items-center">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="cambiar_rol">
+                        <input type="hidden" name="usuario_id" value="{{ u.id }}">
+                        <select name="rol" class="form-select form-select-sm" onchange="this.form.submit()" {% if u.id == request.usuario.id %}disabled{% endif %}>
+                            <option value="usuario" {% if u.rol == 'usuario' %}selected{% endif %}>Usuario</option>
+                            <option value="recepcionista" {% if u.rol == 'recepcionista' %}selected{% endif %}>Recepcionista</option>
+                            <option value="administrador" {% if u.rol == 'administrador' %}selected{% endif %}>Admin</option>
+                            <option value="municipio" {% if u.rol == 'municipio' %}selected{% endif %}>Municipio</option>
+                        </select>
+                    </form>
+                </td>
+                <td><span class="badge badge-{{ u.estado }}">{{ u.get_estado_display }}</span></td>
+                <td>
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="toggle_estado">
+                        <input type="hidden" name="usuario_id" value="{{ u.id }}">
+                        {% if u.id == request.usuario.id %}
+                            <button type="button" class="btn btn-outline-secondary btn-sm" disabled>Tú</button>
+                        {% else %}
+                            <button type="submit" class="btn {% if u.estado == 'activo' %}btn-danger{% else %}btn-primary{% endif %} btn-sm" onclick="return confirm('¿Cambiar estado de este usuario?');">
+                                {% if u.estado == 'activo' %}<i class="bi bi-person-x me-1"></i>Desactivar{% else %}<i class="bi bi-person-check me-1"></i>Activar{% endif %}
+                            </button>
+                        {% endif %}
+                    </form>
+                </td>
+            </tr>
+            {% empty %}<tr><td colspan="6"><div class="empty-state">No hay usuarios registrados.</div></td></tr>{% endfor %}
             </tbody>
         </table>
     </div>
 
-    <!-- Paginación -->
     {% if usuarios.has_other_pages %}
-    <div class="pagination-container p-3 border-top border-secondary border-opacity-25">
-        <nav aria-label="Navegación de páginas">
-            <ul class="pagination pagination-sm mb-0">
-                {% if usuarios.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page=1">&laquo;</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ usuarios.previous_page_number }}">&lsaquo;</a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-                    <li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>
-                {% endif %}
-
-                {% for i in usuarios.paginator.page_range %}
-                    {% if usuarios.number == i %}
-                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
-                    {% elif i > usuarios.number|add:'-3' and i < usuarios.number|add:'3' %}
-                        <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
-                    {% endif %}
-                {% endfor %}
-
-                {% if usuarios.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ usuarios.next_page_number }}">&rsaquo;</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ usuarios.paginator.num_pages }}">&raquo;</a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled"><span class="page-link">&rsaquo;</span></li>
-                    <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-                {% endif %}
-            </ul>
-        </nav>
-        <div class="pagination-info w-100">
-            Página {{ usuarios.number }} de {{ usuarios.paginator.num_pages }} ({{ usuarios.paginator.count }} usuarios)
-        </div>
+    <div class="pagination-container">
+        <nav><ul class="pagination pagination-sm mb-0">
+            {% if usuarios.has_previous %}<li class="page-item"><a class="page-link" href="?page=1">&laquo;</a></li><li class="page-item"><a class="page-link" href="?page={{ usuarios.previous_page_number }}">&lsaquo;</a></li>{% else %}<li class="page-item disabled"><span class="page-link">&laquo;</span></li><li class="page-item disabled"><span class="page-link">&lsaquo;</span></li>{% endif %}
+            {% for i in usuarios.paginator.page_range %}{% if usuarios.number == i %}<li class="page-item active"><span class="page-link">{{ i }}</span></li>{% elif i > usuarios.number|add:'-3' and i < usuarios.number|add:'3' %}<li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>{% endif %}{% endfor %}
+            {% if usuarios.has_next %}<li class="page-item"><a class="page-link" href="?page={{ usuarios.next_page_number }}">&rsaquo;</a></li><li class="page-item"><a class="page-link" href="?page={{ usuarios.paginator.num_pages }}">&raquo;</a></li>{% else %}<li class="page-item disabled"><span class="page-link">&rsaquo;</span></li><li class="page-item disabled"><span class="page-link">&raquo;</span></li>{% endif %}
+        </ul></nav>
+        <div class="pagination-info">Página {{ usuarios.number }} de {{ usuarios.paginator.num_pages }} ({{ usuarios.paginator.count }} usuarios)</div>
     </div>
     {% endif %}
 </div>

@@ -1,49 +1,250 @@
 {% extends 'reservas/base.html' %}
 
-{% block titulo %}Nueva Reserva (Recepción) - Polideportivo{% endblock %}
+{% block titulo %}Nueva Reserva Recepcion - Polideportivo{% endblock %}
 
 {% block contenido %}
-<h1 class="page-title">Nueva Reserva (Recepción)</h1>
-
-<div class="card" style="max-width: 600px; margin: 0 auto; padding: 2rem;">
-    {% if form.errors %}
-        <div class="alert alert-error">Por favor, corrige los errores del formulario.</div>
-    {% endif %}
-
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label>Usuario (Cliente)</label>
-            {{ form.usuario }}
-        </div>
-        <div class="form-group">
-            <label>Cancha</label>
-            {{ form.cancha }}
-        </div>
-        <div class="form-group">
-            <label>Fecha</label>
-            {{ form.fecha }}
-        </div>
-        <div style="display:flex; gap:1rem;">
-            <div class="form-group" style="flex:1;">
-                <label>Hora Inicio</label>
-                {{ form.hora_inicio }}
-            </div>
-            <div class="form-group" style="flex:1;">
-                <label>Hora Fin</label>
-                {{ form.hora_fin }}
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Lista de Invitados</label>
-            {{ form.lista_invitados }}
-        </div>
-        <div class="form-group">
-            <label>Observaciones</label>
-            {{ form.observacion }}
-        </div>
-        
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Confirmar Reserva</button>
-    </form>
+<div class="page-header">
+    <div>
+        <div class="eyebrow">Recepcion</div>
+        <h1 class="page-title">Reserva manual</h1>
+        <p class="page-subtitle">Crea una reserva para un cliente desde el panel de recepcion.</p>
+    </div>
 </div>
+
+{% if form.errors %}<div class="alert-error mb-3">Por favor, corrige los errores del formulario.</div>{% endif %}
+
+<form method="post" id="recepcionReservaForm" data-slot-url="{% url 'recepcion_horarios_disponibles' %}">
+    {% csrf_token %}
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="app-card">
+                <h2 class="section-title"><i class="bi bi-person-plus me-2 text-success"></i>Datos del cliente y horario</h2>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Usuario (cliente)</label>
+                        {{ form.usuario }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Cancha</label>
+                        {{ form.cancha }}
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Fecha</label>
+                        {{ form.fecha }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Horario disponible</label>
+                        {{ form.horario_disponible }}
+                        {{ form.hora_inicio }}
+                        {{ form.hora_fin }}
+                        <div class="form-text">El recepcionista solo puede elegir horarios ya configurados para esa cancha y ese dia.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Hora inicio</label>
+                        <input type="text" id="horaInicioPreview" class="form-control" value="{% if form.hora_inicio.value %}{{ form.hora_inicio.value|time:'H:i' }}{% endif %}" placeholder="Se llena al elegir el horario" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Hora fin</label>
+                        <input type="text" id="horaFinPreview" class="form-control" value="{% if form.hora_fin.value %}{{ form.hora_fin.value|time:'H:i' }}{% endif %}" placeholder="Se llena al elegir el horario" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Cuantos acompañantes van</label>
+                        {{ form.cantidad_invitados }}
+                        <div class="form-text">Si el cliente viene solo, deja 0.</div>
+                    </div>
+                    <div class="col-12">
+                        {{ form.lista_invitados }}
+                        <label class="form-label">Lista de invitados</label>
+                        <div class="guest-builder">
+                            <div class="guest-builder-header">
+                                <strong>Detalle del grupo</strong>
+                                <span class="text-muted small">Esta lista quedará visible en agenda y al validar el QR.</span>
+                            </div>
+                            <div id="guestFieldsContainer" class="guest-fields-grid"></div>
+                            <div id="guestFieldsEmpty" class="guest-fields-empty">No hay acompañantes registrados todavía.</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Observaci?nes</label>
+                        {{ form.observacion }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="app-card reservation-summary">
+                <div class="kpi-icon"><i class="bi bi-headset"></i></div>
+                <h2 class="section-title">Panel recepcion</h2>
+                <p class="text-muted">La reserva quedara confirmada y lista para validar por QR al momento de llegada.</p>
+                <button type="submit" class="btn btn-primary w-100 btn-lg"><i class="bi bi-check2-circle me-1"></i>Confirmar reserva</button>
+                <a href="{% url 'calendario_reservas' %}" class="btn btn-outline-secondary w-100 mt-2">Volver al calendario</a>
+            </div>
+        </div>
+    </div>
+</form>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('recepcionReservaForm');
+        if (!form) return;
+
+        const canchaField = document.getElementById('id_cancha');
+        const fechaField = document.getElementById('id_fecha');
+        const horarioField = document.getElementById('id_horario_disponible');
+        const horaInicioHidden = document.getElementById('id_hora_inicio');
+        const horaFinHidden = document.getElementById('id_hora_fin');
+        const horaInicioPreview = document.getElementById('horaInicioPreview');
+        const horaFinPreview = document.getElementById('horaFinPreview');
+        const countInput = document.getElementById('id_cantidad_invitados');
+        const hiddenGuestInput = document.getElementById('id_lista_invitados');
+        const guestContainer = document.getElementById('guestFieldsContainer');
+        const guestEmpty = document.getElementById('guestFieldsEmpty');
+        const slotUrl = form.dataset.slotUrl;
+
+        function setPreviewFromSlot(value) {
+            if (!value || value.indexOf('|') === -1) {
+                horaInicioHidden.value = '';
+                horaFinHidden.value = '';
+                horaInicioPreview.value = '';
+                horaFinPreview.value = '';
+                return;
+            }
+
+            const parts = value.split('|');
+            horaInicioHidden.value = parts[0];
+            horaFinHidden.value = parts[1];
+            horaInicioPreview.value = parts[0];
+            horaFinPreview.value = parts[1];
+        }
+
+        function renderOptions(options, message, keepValue) {
+            const previousValue = keepValue || '';
+            horarioField.innerHTML = '';
+
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = message;
+            horarioField.appendChild(placeholder);
+
+            options.forEach(function (optionData) {
+                const option = document.createElement('option');
+                option.value = optionData.value;
+                option.textContent = optionData.label;
+                horarioField.appendChild(option);
+            });
+
+            if (previousValue && options.some(function (item) { return item.value === previousValue; })) {
+                horarioField.value = previousValue;
+            } else {
+                horarioField.value = '';
+            }
+
+            setPreviewFromSlot(horarioField.value);
+        }
+
+        async function loadAvailableSlots() {
+            const cancha = canchaField.value;
+            const fecha = fechaField.value;
+            const selectedBefore = horarioField.value;
+
+            if (!cancha || !fecha) {
+                renderOptions([], 'Selecciona cancha y fecha primero', '');
+                return;
+            }
+
+            horarioField.disabled = true;
+            renderOptions([], 'Cargando horarios...', '');
+
+            try {
+                const response = await fetch(slotUrl + '?cancha=' + encodeURIComponent(cancha) + '&fecha=' + encodeURIComponent(fecha), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await response.json();
+                renderOptions(data.options || [], data.options && data.options.length ? 'Selecciona un horario disponible' : (data.message || 'No hay horarios libres para esa fecha'), selectedBefore);
+            } catch (error) {
+                renderOptions([], 'No se pudieron cargar los horarios', '');
+            } finally {
+                horarioField.disabled = false;
+            }
+        }
+
+        function parseGuests(rawValue) {
+            return rawValue
+                .split(/[\n,;]+/)
+                .map(function (item) { return item.trim().replace(/\s+/g, ' '); })
+                .filter(Boolean);
+        }
+
+        function syncHiddenGuests() {
+            const values = Array.from(guestContainer.querySelectorAll('input[data-guest-name]'))
+                .map(function (input) { return input.value.trim().replace(/\s+/g, ' '); })
+                .filter(Boolean);
+            hiddenGuestInput.value = values.join('\n');
+        }
+
+        function renderGuestInputs() {
+            if (!countInput || !hiddenGuestInput || !guestContainer || !guestEmpty) {
+                return;
+            }
+
+            const guestCount = Math.max(parseInt(countInput.value || '0', 10) || 0, 0);
+            const currentValues = parseGuests(hiddenGuestInput.value);
+            guestContainer.innerHTML = '';
+            guestEmpty.style.display = guestCount === 0 ? 'block' : 'none';
+
+            for (let index = 0; index < guestCount; index += 1) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'guest-input-card';
+
+                const label = document.createElement('label');
+                label.className = 'form-label';
+                label.setAttribute('for', 'id_invitado_' + (index + 1));
+                label.textContent = 'Acompañante ' + (index + 1);
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = 'invitado_' + (index + 1);
+                input.id = 'id_invitado_' + (index + 1);
+                input.className = 'form-control';
+                input.placeholder = 'Nombre completo';
+                input.value = currentValues[index] || '';
+                input.setAttribute('data-guest-name', 'true');
+                input.addEventListener('input', syncHiddenGuests);
+
+                wrapper.appendChild(label);
+                wrapper.appendChild(input);
+                guestContainer.appendChild(wrapper);
+            }
+
+            syncHiddenGuests();
+        }
+
+        canchaField.addEventListener('change', loadAvailableSlots);
+        fechaField.addEventListener('change', loadAvailableSlots);
+        horarioField.addEventListener('change', function () {
+            setPreviewFromSlot(horarioField.value);
+        });
+
+        if (canchaField.value && fechaField.value) {
+            loadAvailableSlots().then(function () {
+                if (!horarioField.value) {
+                    setPreviewFromSlot('');
+                }
+            });
+        } else {
+            setPreviewFromSlot(horarioField.value);
+        }
+
+        if (countInput) {
+            countInput.addEventListener('input', renderGuestInputs);
+            countInput.addEventListener('change', renderGuestInputs);
+            renderGuestInputs();
+        }
+
+        form.addEventListener('submit', syncHiddenGuests);
+    });
+</script>
+{% endblock %}
+

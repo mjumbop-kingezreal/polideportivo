@@ -3,50 +3,146 @@
 {% block titulo %}Crear Reserva - Polideportivo{% endblock %}
 
 {% block contenido %}
-<h1 class="page-title">Nueva Reserva</h1>
-
-<div class="card" style="max-width: 600px;">
-    {% if form.errors %}
-        <div class="alert alert-danger">
-            {% for error in form.non_field_errors %}
-                <div>{{ error }}</div>
-            {% endfor %}
-            {% for field in form %}
-                {% for error in field.errors %}
-                    <div><strong>{{ field.label }}:</strong> {{ error }}</div>
-                {% endfor %}
-            {% endfor %}
-        </div>
-    {% endif %}
-
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group mb-3">
-            <label>Cancha</label>
-            {{ form.cancha }}
-        </div>
-        <div class="form-group mb-3">
-            <label>Fecha</label>
-            {{ form.fecha }}
-        </div>
-        <div class="form-group mb-3">
-            <label>Hora Inicio</label>
-            {{ form.hora_inicio }}
-        </div>
-        <div class="form-group mb-3">
-            <label>Hora Fin</label>
-            {{ form.hora_fin }}
-        </div>
-        <div class="form-group mb-3">
-            <label>Lista de Invitados (Acompañantes)</label>
-            {{ form.lista_invitados }}
-        </div>
-        <div class="form-group mb-3">
-            <label>Observación</label>
-            {{ form.observacion }}
-        </div>
-        <button type="submit" class="btn btn-primary">Confirmar Reserva</button>
-        <a href="{% url 'disponibilidad' %}" class="btn btn-outline-light ms-2">Cancelar</a>
-    </form>
+<div class="page-header">
+    <div>
+        <div class="eyebrow">Reserva</div>
+        <h1 class="page-title">Nueva reserva</h1>
+        <p class="page-subtitle">Confirma los datos del horario seleccionado.</p>
+    </div>
 </div>
+
+{% if form.errors %}
+<div class="alert-error mb-3">
+    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+    {% for field in form %}{% for error in field.errors %}<div><strong>{{ field.label }}:</strong> {{ error }}</div>{% endfor %}{% endfor %}
+</div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="app-card">
+                <h2 class="section-title"><i class="bi bi-pencil-square me-2 text-success"></i>Datos de reserva</h2>
+                <div class="row g-3">
+                    <div class="col-md-12"><label class="form-label">Cancha</label>{{ form.cancha }}</div>
+                    <div class="col-md-12"><label class="form-label">Fecha</label>{{ form.fecha }}</div>
+                    <div class="col-md-6"><label class="form-label">Hora inicio</label>{{ form.hora_inicio }}</div>
+                    <div class="col-md-6"><label class="form-label">Hora fin</label>{{ form.hora_fin }}</div>
+                    <div class="col-md-4">
+                        <label class="form-label">Cuantos acompañantes van</label>
+                        {{ form.cantidad_invitados }}
+                        <div class="form-text">Si vas solo, deja el valor en 0.</div>
+                    </div>
+                    <div class="col-12">
+                        {{ form.lista_invitados }}
+                        <label class="form-label">Lista de invitados (acompañantes)</label>
+                        <div class="guest-builder" data-guest-builder>
+                            <div class="guest-builder-header">
+                                <strong>Escribe el nombre de cada acompañante</strong>
+                                <span class="text-muted small">La lista se usará en agenda y al validar el QR.</span>
+                            </div>
+                            <div id="guestFieldsContainer" class="guest-fields-grid"></div>
+                            <div id="guestFieldsEmpty" class="guest-fields-empty">No hay acompañantes registrados todavía.</div>
+                        </div>
+                    </div>
+                    <div class="col-12"><label class="form-label">Observación</label>{{ form.observacion }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="app-card reservation-summary">
+                <div class="kpi-icon"><i class="bi bi-calendar-check"></i></div>
+                <h2 class="section-title">Resumen</h2>
+                <div class="summary-row"><span>Usuario</span><strong>{{ usuario.nombre }}</strong></div>
+                <div class="summary-row"><span>Correo</span><strong>{{ usuario.correo }}</strong></div>
+                <div class="summary-row"><span>Estado</span><strong>Por confirmar</strong></div>
+                <p class="text-muted mt-3 mb-4">Al confirmar se generará tu código QR de acceso.</p>
+                <button type="submit" class="btn btn-primary w-100 btn-lg"><i class="bi bi-check2-circle me-1"></i>Confirmar reserva</button>
+                <a href="{% url 'disponibilidad' %}" class="btn btn-outline-secondary w-100 mt-2">Cancelar</a>
+            </div>
+        </div>
+    </div>
+</form>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const countInput = document.getElementById('id_cantidad_invitados');
+        const hiddenInput = document.getElementById('id_lista_invitados');
+        const container = document.getElementById('guestFieldsContainer');
+        const emptyState = document.getElementById('guestFieldsEmpty');
+
+        if (!countInput || !hiddenInput || !container || !emptyState) {
+            return;
+        }
+
+        function parseGuests(rawValue) {
+            return rawValue
+                .split(/[\n,;]+/)
+                .map(function (item) { return item.trim().replace(/\s+/g, ' '); })
+                .filter(Boolean);
+        }
+
+        function syncHiddenField() {
+            const values = Array.from(container.querySelectorAll('input[data-guest-name]'))
+                .map(function (input) { return input.value.trim().replace(/\s+/g, ' '); })
+                .filter(Boolean);
+            hiddenInput.value = values.join('\n');
+        }
+
+        function renderGuestInputs() {
+            const guestCount = Math.max(parseInt(countInput.value || '0', 10) || 0, 0);
+            const currentValues = parseGuests(hiddenInput.value);
+
+            container.innerHTML = '';
+            emptyState.style.display = guestCount === 0 ? 'block' : 'none';
+
+            for (let index = 0; index < guestCount; index += 1) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'guest-input-card';
+
+                const label = document.createElement('label');
+                label.className = 'form-label';
+                label.setAttribute('for', 'id_invitado_' + (index + 1));
+                label.textContent = 'Acompañante ' + (index + 1);
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = 'invitado_' + (index + 1);
+                input.id = 'id_invitado_' + (index + 1);
+                input.className = 'form-control';
+                input.placeholder = 'Nombre completo';
+                input.value = currentValues[index] || '';
+                input.setAttribute('data-guest-name', 'true');
+                input.addEventListener('input', syncHiddenField);
+
+                wrapper.appendChild(label);
+                wrapper.appendChild(input);
+                container.appendChild(wrapper);
+            }
+
+            syncHiddenField();
+        }
+
+        if (!countInput.value) {
+            const detectedGuests = parseGuests(hiddenInput.value).length;
+            if (detectedGuests) {
+                countInput.value = detectedGuests;
+            }
+        }
+
+        countInput.addEventListener('input', renderGuestInputs);
+        countInput.addEventListener('change', renderGuestInputs);
+
+        renderGuestInputs();
+
+        const form = countInput.form;
+        if (form) {
+            form.addEventListener('submit', syncHiddenField);
+        }
+    });
+</script>
+{% endblock %}
+

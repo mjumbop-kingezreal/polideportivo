@@ -1,64 +1,49 @@
 {% extends 'reservas/base.html' %}
 
-{% block titulo %}Configuración de Puntos{% endblock %}
+{% block titulo %}Configuración de Puntos - Polideportivo{% endblock %}
 
 {% block contenido %}
-<h1 class="page-title">Configuración de Puntos</h1>
-
-<div class="card">
-    <h2>Editar Reglas de Puntos</h2>
-
-    {% if form.non_field_errors %}
-        {% for error in form.non_field_errors %}
-            <div class="alert" style="background: rgba(231,76,60,0.15); border-left: 4px solid #e74c3c; color: #e74c3c;">
-                {{ error }}
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    {% if form.errors %}
-        <div class="alert" style="background: rgba(231,76,60,0.15); border-left: 4px solid #e74c3c; color: #e74c3c;">
-            Por favor corrige los errores indicados.
-        </div>
-    {% endif %}
-
-    <form method="post">
-        {% csrf_token %}
-        {% for field in form.visible_fields %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}
-                    {% for error in field.errors %}
-                        <small style="color: #e74c3c;">{{ error }}</small>
-                    {% endfor %}
-                {% endif %}
-                {% if field.help_text %}
-                    <small style="color: rgba(255,255,255,0.5);">{{ field.help_text }}</small>
-                {% endif %}
-            </div>
-        {% endfor %}
-        <button type="submit" class="btn btn-primary">Guardar Configuración</button>
-    </form>
+<div class="page-header">
+    <div>
+        <div class="eyebrow">Administración</div>
+        <h1 class="page-title">Configuración de puntos</h1>
+        <p class="page-subtitle">Define los puntos otorgados por asistencia.</p>
+    </div>
 </div>
 
 {% if config %}
-<div class="card" style="margin-top: 2rem;">
-    <h2>Configuración Actual</h2>
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-number">{{ config.puntos_por_asistencia }}</div>
-            <div class="stat-label">Puntos por Asistencia</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ config.minimo_canje }}</div>
-            <div class="stat-label">Mínimo para Canje</div>
-        </div>
-    </div>
-    <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
-        <strong style="color: rgba(255,255,255,0.7);">Beneficio del Canje:</strong>
-        <p style="margin-top: 0.5rem;">{{ config.descripcion_beneficio }}</p>
-    </div>
+<div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-icon"><i class="bi bi-stars"></i></div><div class="kpi-value">{{ config.puntos_por_asistencia }}</div><div class="kpi-label">Puntos por asistencia</div></div>
 </div>
 {% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="app-card">
+            <h2 class="section-title">Editar reglas</h2>
+            {% if form.non_field_errors %}{% for error in form.non_field_errors %}<div class="alert-error mb-2">{{ error }}</div>{% endfor %}{% endif %}
+            {% if form.errors %}<div class="alert-error mb-3">Por favor corrige los errores indicados.</div>{% endif %}
+            <form method="post" class="d-grid gap-3">
+                {% csrf_token %}
+                {% for field in form.visible_fields %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}{% for error in field.errors %}<small class="text-danger d-block mt-1">{{ error }}</small>{% endfor %}{% endif %}
+                    {% if field.help_text %}<small class="text-muted d-block mt-1">{{ field.help_text }}</small>{% endif %}
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Guardar configuración</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="reward-card h-100">
+            <div class="reward-icon mb-3"><i class="bi bi-shop"></i></div>
+            <h2 class="section-title">Productos del bar</h2>
+            <p class="text-muted">Administra los productos disponibles para canjear con puntos.</p>
+            <a href="{% url 'admin_productos_bar' %}" class="btn btn-primary mt-3"><i class="bi bi-arrow-right me-1"></i>Ir a productos</a>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -1,0 +1,266 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Bar - Polideportivo</title>
+    <style>
+        :root {
+            --ticket-width-screen: 320px;
+            --ticket-width-print: 72mm;
+            --paper-width-print: 80mm;
+            --ink: #111;
+            --muted: #666;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: #ececec;
+            color: var(--ink);
+            padding: 16px;
+        }
+
+        .ticket {
+            width: min(100%, var(--ticket-width-screen));
+            margin: 0 auto;
+            background: #fff;
+            padding: 14px 12px 18px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            border-radius: 6px;
+        }
+
+        .screen-note {
+            width: min(100%, var(--ticket-width-screen));
+            margin: 0 auto 12px;
+            font: 600 12px/1.4 system-ui, sans-serif;
+            color: #334155;
+            background: #e0f2fe;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .screen-actions {
+            width: min(100%, var(--ticket-width-screen));
+            margin: 0 auto 12px;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .screen-actions button {
+            border: 0;
+            border-radius: 999px;
+            padding: 10px 16px;
+            font: 600 13px/1 system-ui, sans-serif;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #0f172a;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .brand {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin: 0 0 4px;
+        }
+
+        .subtitle,
+        .meta,
+        .footer-copy {
+            font-size: 11px;
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .section {
+            margin-bottom: 10px;
+        }
+
+        .label-row,
+        .value-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+
+        .label-row span:first-child,
+        .value-row span:first-child {
+            color: var(--muted);
+        }
+
+        .product-block {
+            border-top: 1px dashed #000;
+            border-bottom: 1px dashed #000;
+            padding: 8px 0;
+            margin: 10px 0;
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .product-qty {
+            font-size: 12px;
+            color: var(--muted);
+            margin: 4px 0 0;
+        }
+
+        .code-box {
+            margin-top: 10px;
+            text-align: center;
+            border: 1px dashed #000;
+            padding: 8px 6px;
+        }
+
+        .code-label {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 0 4px;
+        }
+
+        .code-value {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+
+        .footer {
+            text-align: center;
+            border-top: 1px dashed #000;
+            padding-top: 8px;
+            margin-top: 10px;
+        }
+
+        @page {
+            size: 80mm auto;
+            margin: 0;
+        }
+
+        @media print {
+            html,
+            body {
+                width: var(--paper-width-print);
+                background: #fff;
+                padding: 0;
+            }
+
+            body {
+                margin: 0;
+            }
+
+            .screen-note,
+            .screen-actions {
+                display: none !important;
+            }
+
+            .ticket {
+                width: var(--ticket-width-print);
+                margin: 0 auto;
+                padding: 4mm 4mm 6mm;
+                box-shadow: none;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="screen-note">
+        Este ticket esta optimizado para impresoras termicas de 80 mm. Si usas una impresora normal A4, se vera dentro de una hoja grande.
+    </div>
+
+    <div class="screen-actions">
+        <button type="button" class="btn-primary" onclick="window.print()">Imprimir ticket</button>
+        <button type="button" class="btn-secondary" onclick="window.close()">Cerrar</button>
+    </div>
+
+    <main class="ticket">
+        <header class="header">
+            <p class="brand">POLIDEPORTIVO</p>
+            <p class="subtitle">Ticket de canje - Bar</p>
+            <p class="meta">Fecha: {{ canje.fecha|date:"d/m/Y H:i" }}</p>
+        </header>
+
+        <section class="section">
+            <div class="label-row">
+                <span>Cliente</span>
+                <strong>{{ canje.usuario.nombre }}</strong>
+            </div>
+            <div class="label-row">
+                <span>Canje</span>
+                <strong>#{{ canje.id }}</strong>
+            </div>
+        </section>
+
+        <section class="product-block">
+            <p class="product-name">{{ canje.producto.nombre }}</p>
+            <p class="product-qty">Cantidad: 1 unidad</p>
+        </section>
+
+        <section class="section">
+            <div class="value-row">
+                <span>Pagado con</span>
+                <strong>{{ canje.puntos_usados }} puntos</strong>
+            </div>
+            <div class="value-row">
+                <span>Estado</span>
+                <strong>Entregado para retiro</strong>
+            </div>
+        </section>
+
+        <div class="code-box">
+            <p class="code-label">Codigo del voucher</p>
+            <p class="code-value">{{ canje.codigo }}</p>
+        </div>
+
+        <footer class="footer">
+            <p class="footer-copy">Presentar este ticket en barra para retirar el producto.</p>
+        </footer>
+    </main>
+
+    <script>
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                window.print();
+            }, 250);
+        });
+
+        window.addEventListener('afterprint', function() {
+            window.close();
+        });
+    </script>
+</body>
+</html>

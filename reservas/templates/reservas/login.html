@@ -1,71 +1,50 @@
 {% extends 'reservas/base.html' %}
+{% load static %}
 
-{% block titulo %}Iniciar Sesión - Poly{% endblock %}
+{% block titulo %}Iniciar Sesion - Polideportivo{% endblock %}
 
 {% block contenido %}
-<!-- Estilos auth-card y floating-hyper en style.css -->
-<div class="d-flex align-items-center justify-content-center auth-wrapper">
-    <div class="auth-card-hyper position-relative">
-        <!-- Ornamento decorativo de fondo -->
-        <div class="position-absolute top-0 start-50 translate-middle" style="width: 150px; height: 150px; background: var(--brand-primary); filter: blur(80px); opacity: 0.3; z-index: -1;"></div>
+<div class="auth-layout">
+    <section class="auth-visual">
+        <div class="eyebrow text-white-50">Sistema de Reservas</div>
+        <h1>Reserva tu cancha en segundos.</h1>
+        <p>Gestiona horarios, valida codigos QR y disfruta una experiencia deportiva simple, rapida y moderna.</p>
+        <div class="sport-orbit">
+            <span><i class="bi bi-dribbble"></i></span>
+            <span><i class="bi bi-trophy-fill"></i></span>
+            <span><i class="bi bi-lightning-charge-fill"></i></span>
+        </div>
+    </section>
 
-        <div class="auth-brand-icon">
-            <i class="ph-light ph-hexagon"></i>
-        </div>
-        
-        <div class="text-center mb-5">
-            <h2 class="fw-bold mb-2">Bienvenido de vuelta</h2>
-            <p class="text-muted" style="font-size: 0.95rem;">Ingresa tus credenciales para continuar</p>
-        </div>
+    <section class="auth-card">
+        <div class="brand-mark brand-mark-plain"><img src="{% static 'img/polireserva-logo.png' %}" alt="Logo PoliReserva"></div>
+        <h2>Bienvenido</h2>
+        <p class="text-center text-muted mb-4">Ingresa tus credenciales para continuar</p>
 
         {% if form.errors %}
-            <div class="alert bg-danger bg-opacity-10 border border-danger border-opacity-25 text-danger d-flex gap-3 align-items-start rounded-4 p-3 mb-4">
-                <i class="ph-fill ph-warning-circle fs-4 mt-1"></i>
-                <div class="fs-6">
-                    {% for error in form.non_field_errors %}
-                        {{ error }}
-                    {% endfor %}
-                </div>
-            </div>
+        <div class="alert-error mb-3">
+            {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+        </div>
         {% endif %}
 
-        <form method="post">
+        <form method="post" class="d-grid gap-3">
             {% csrf_token %}
-            
-            <div class="form-floating form-floating-hyper">
+            <div>
+                <label for="{{ form.correo.id_for_label }}" class="form-label"><i class="bi bi-envelope me-1"></i>Correo electronico</label>
                 {{ form.correo }}
-                <i class="ph-light ph-envelope-simple form-icon"></i>
-                <label for="{{ form.correo.id_for_label }}">Correo electrónico</label>
             </div>
-            
-            <div class="form-floating form-floating-hyper">
+            <div>
+                <label for="{{ form.password.id_for_label }}" class="form-label"><i class="bi bi-lock me-1"></i>Contrasena</label>
                 {{ form.password }}
-                <i class="ph-light ph-lock-key form-icon"></i>
-                <label for="{{ form.password.id_for_label }}">Contraseña</label>
             </div>
-            
-            <button type="submit" class="btn btn-brand w-100 py-3 mt-4 d-flex justify-content-center align-items-center gap-2">
-                Iniciar Sesión <i class="ph-bold ph-arrow-right"></i>
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+                Iniciar sesion <i class="bi bi-arrow-right ms-1"></i>
             </button>
         </form>
 
-        <div class="text-center mt-5">
-            <span class="text-muted" style="font-size: 0.9rem;">¿No tienes cuenta?</span> 
-            <a href="{% url 'registro' %}" class="text-white text-decoration-none fw-medium ms-1 position-relative" style="font-size: 0.9rem;">
-                Regístrate aquí
-                <span class="position-absolute bottom-0 start-0 w-100 border-bottom border-primary" style="transform: translateY(2px);"></span>
-            </a>
-        </div>
-    </div>
+        <p class="text-center text-muted mt-4 mb-0">
+            No tienes cuenta? <a href="{% url 'registro' %}" class="auth-link">Registrate aqui</a>
+        </p>
+    </section>
 </div>
-
-<script>
-    document.querySelectorAll('.form-floating-hyper input').forEach(input => {
-        input.classList.add('form-control');
-        // El espacio vacío activa el pseudo-clase :not(:placeholder-shown) necesario para el floating label
-        if(!input.getAttribute('placeholder')) {
-            input.setAttribute('placeholder', ' ');
-        }
-    });
-</script>
 {% endblock %}

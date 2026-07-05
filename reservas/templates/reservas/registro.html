@@ -1,67 +1,51 @@
 {% extends 'reservas/base.html' %}
+{% load static %}
 
-{% block titulo %}Registro - Poly{% endblock %}
+{% block titulo %}Registro - Polideportivo{% endblock %}
 
 {% block contenido %}
-<!-- Estilos auth-card en style.css -->
-
-<div class="d-flex align-items-center justify-content-center auth-wrapper">
-    <div class="auth-card-hyper position-relative">
-        <div class="position-absolute top-100 start-50 translate-middle" style="width: 200px; height: 100px; background: var(--brand-accent); filter: blur(90px); opacity: 0.25; z-index: -1;"></div>
-
-        <div class="auth-brand-icon">
-            <i class="ph-light ph-user-plus"></i>
+<div class="auth-layout">
+    <section class="auth-visual">
+        <div class="eyebrow text-white-50">Nuevo usuario</div>
+        <h1>Unete al polideportivo digital.</h1>
+        <p>Crea tu cuenta para reservar canchas, consultar disponibilidad y acumular puntos por asistencia.</p>
+        <div class="sport-orbit">
+            <span><i class="bi bi-person-plus-fill"></i></span>
+            <span><i class="bi bi-calendar-check-fill"></i></span>
+            <span><i class="bi bi-stars"></i></span>
         </div>
-        
-        <div class="text-center mb-5">
-            <h2 class="fw-bold mb-2">Crear Cuenta</h2>
-            <p class="text-muted" style="font-size: 0.95rem;">Únete a nuestra plataforma premium</p>
-        </div>
+    </section>
+
+    <section class="auth-card">
+        <div class="brand-mark brand-mark-plain"><img src="{% static 'img/polireserva-logo.png' %}" alt="Logo PoliReserva"></div>
+        <h2>Crear cuenta</h2>
+        <p class="text-center text-muted mb-4">Completa tus datos para empezar</p>
 
         {% if form.errors %}
-            <div class="alert bg-danger bg-opacity-10 border border-danger border-opacity-25 text-danger d-flex gap-3 align-items-start rounded-4 p-3 mb-4">
-                <i class="ph-fill ph-warning-circle fs-4 mt-1"></i>
-                <div class="fs-6 w-100">
-                    {% for field, errors in form.errors.items %}
-                        {% for error in errors %}
-                            <div class="mb-1"><span class="fw-bold">{{ field|title }}:</span> {{ error }}</div>
-                        {% endfor %}
-                    {% endfor %}
-                </div>
-            </div>
+        <div class="alert-error mb-3">
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}<div><strong>{{ field|title }}:</strong> {{ error }}</div>{% endfor %}
+            {% endfor %}
+        </div>
         {% endif %}
 
-        <form method="post">
+        <form method="post" class="d-grid gap-3">
             {% csrf_token %}
-            
             {% for field in form.visible_fields %}
-                <div class="form-floating form-floating-hyper">
-                    {{ field }}
-                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                </div>
+            <div>
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<small class="text-muted d-block mt-1">{{ field.help_text }}</small>{% endif %}
+            </div>
             {% endfor %}
-            
-            <button type="submit" class="btn btn-brand w-100 py-3 mt-4 d-flex justify-content-center align-items-center gap-2" style="background: linear-gradient(135deg, var(--brand-accent), var(--brand-primary));">
-                Registrarse <i class="ph-bold ph-check"></i>
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+                Crear cuenta <i class="bi bi-check2-circle ms-1"></i>
             </button>
         </form>
 
-        <div class="text-center mt-5">
-            <span class="text-muted" style="font-size: 0.9rem;">¿Ya eres miembro?</span> 
-            <a href="{% url 'login' %}" class="text-white text-decoration-none fw-medium ms-1 position-relative" style="font-size: 0.9rem;">
-                Inicia sesión
-                <span class="position-absolute bottom-0 start-0 w-100 border-bottom border-primary" style="transform: translateY(2px);"></span>
-            </a>
-        </div>
-    </div>
+        <p class="text-center text-muted mt-4 mb-0">
+            Ya tienes cuenta? <a href="{% url 'login' %}" class="auth-link">Inicia sesion</a>
+        </p>
+    </section>
 </div>
-
-<script>
-    document.querySelectorAll('.form-floating-hyper input, .form-floating-hyper select').forEach(input => {
-        input.classList.add('form-control');
-        if(!input.getAttribute('placeholder')) {
-            input.setAttribute('placeholder', ' ');
-        }
-    });
-</script>
 {% endblock %}

@@ -2,109 +2,961 @@
 
 {% block titulo %}Canjear Puntos{% endblock %}
 
+{% block extra_css %}
+<style>
+    .points-shell {
+        display: grid;
+        gap: .95rem;
+        max-width: 1240px;
+        margin: 0 auto;
+    }
+    .points-top {
+        display: grid;
+        grid-template-columns: minmax(0, 1.7fr) 300px;
+        gap: .95rem;
+        align-items: stretch;
+    }
+    .points-hero {
+        position: relative;
+        overflow: hidden;
+        padding: 1.2rem 1.35rem;
+        border-radius: 28px;
+        background:
+            radial-gradient(circle at top right, rgba(255,255,255,.2), transparent 28%),
+            linear-gradient(135deg, #183b56 0%, #c2410c 55%, #f97316 100%);
+        color: white;
+        box-shadow: var(--shadow);
+    }
+    .points-hero::after {
+        content: '';
+        position: absolute;
+        width: 170px;
+        height: 170px;
+        right: -56px;
+        top: -62px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.08);
+    }
+    .points-hero-copy {
+        position: relative;
+        z-index: 1;
+        max-width: 720px;
+    }
+    .points-hero-label {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .38rem .72rem;
+        border-radius: 999px;
+        background: rgba(255,255,255,.12);
+        color: rgba(255,255,255,.94);
+        font-size: .74rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin-bottom: .75rem;
+    }
+    .points-hero h1 {
+        margin: 0 0 .5rem;
+        font-family: var(--font-heading);
+        font-size: clamp(1.55rem, 3vw, 2.45rem);
+        font-weight: 800;
+        line-height: 1;
+    }
+    .points-hero p {
+        margin: 0;
+        color: rgba(255,255,255,.86);
+        font-size: .93rem;
+        max-width: 560px;
+    }
+    .hero-pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .55rem;
+        margin-top: .9rem;
+    }
+    .hero-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: .42rem;
+        padding: .5rem .82rem;
+        border-radius: 999px;
+        background: rgba(255,255,255,.12);
+        color: white;
+        font-weight: 700;
+        font-size: .8rem;
+    }
+    .balance-card {
+        border-radius: 28px;
+        padding: 1rem 1.05rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f6fbff 100%);
+        border: 1px solid #dce9f4;
+        box-shadow: var(--shadow-soft);
+        display: grid;
+        gap: .72rem;
+        align-content: start;
+    }
+    .balance-kicker {
+        color: #57718e;
+        font-size: .74rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+    }
+    .balance-number {
+        color: #10243d;
+        font-family: var(--font-heading);
+        font-size: clamp(2.2rem, 4vw, 3rem);
+        font-weight: 800;
+        line-height: .95;
+    }
+    .balance-label {
+        color: #21466d;
+        font-size: .92rem;
+        font-weight: 700;
+        margin-top: -.25rem;
+    }
+    .balance-list {
+        display: grid;
+        gap: .55rem;
+    }
+    .balance-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .8rem;
+        padding: .72rem .78rem;
+        border-radius: 16px;
+        background: #f8fbfe;
+        border: 1px solid #e3edf5;
+    }
+    .balance-item span {
+        color: #5f7894;
+        font-size: .82rem;
+        font-weight: 700;
+    }
+    .balance-item strong {
+        color: #163a63;
+        font-size: 1rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+    .balance-hint {
+        margin: 0;
+        color: var(--muted);
+        font-size: .82rem;
+        line-height: 1.45;
+    }
+    .voucher-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 24px;
+        padding: .95rem;
+        background: linear-gradient(135deg, #fffef8 0%, #fff7ed 58%, #ffedd5 100%);
+        border: 1px solid rgba(249, 115, 22, .28);
+        box-shadow: var(--shadow-soft);
+    }
+    .voucher-card::before {
+        content: '';
+        position: absolute;
+        width: 170px;
+        height: 170px;
+        right: -70px;
+        bottom: -82px;
+        border-radius: 50%;
+        background: rgba(249, 115, 22, .11);
+    }
+    .voucher-top {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: .9rem;
+        margin-bottom: .82rem;
+    }
+    .voucher-title h2 {
+        margin: .12rem 0 .24rem;
+        font-family: var(--font-heading);
+        font-size: clamp(1.3rem, 2.2vw, 1.85rem);
+    }
+    .voucher-title p {
+        margin: 0;
+        color: var(--muted);
+        font-size: .9rem;
+    }
+    .voucher-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .38rem .72rem;
+        border-radius: 999px;
+        font-size: .78rem;
+        font-weight: 800;
+        border: 1px solid transparent;
+        white-space: nowrap;
+    }
+    .voucher-badge.is-vigente {
+        color: #166534;
+        background: #eaf8f0;
+        border-color: #b7ebc7;
+    }
+    .voucher-badge.is-caducado {
+        color: #b45309;
+        background: #fff4e5;
+        border-color: #f6d6a8;
+    }
+    .voucher-badge.is-canjeado,
+    .voucher-badge.is-cancelado {
+        color: #5b6472;
+        background: #eef1f4;
+        border-color: #d7dde5;
+    }
+    .voucher-body {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: 170px minmax(0, 1fr);
+        gap: .85rem;
+        align-items: stretch;
+    }
+    .voucher-qr-card {
+        border-radius: 20px;
+        background: white;
+        border: 1px solid #dceaf2;
+        padding: .8rem;
+        text-align: center;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.5);
+    }
+    .voucher-qr-card img {
+        width: 118px;
+        height: 118px;
+        border-radius: 14px;
+        background: white;
+        border: 1px solid #e8edf2;
+        padding: 8px;
+        margin-bottom: .68rem;
+    }
+    .voucher-code-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        padding: .52rem .74rem;
+        border-radius: 15px;
+        background: #f6f8fb;
+        border: 1px solid #e1e8f0;
+        color: #163a63;
+        font-weight: 800;
+        font-size: .95rem;
+        letter-spacing: .02em;
+    }
+    .qr-zoom-trigger {
+        cursor: pointer;
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .qr-zoom-trigger:hover {
+        transform: translateY(-2px);
+        border-color: rgba(46, 119, 228, .28);
+        box-shadow: var(--shadow);
+    }
+    .qr-zoom-trigger:focus-visible {
+        outline: 3px solid rgba(46, 119, 228, .22);
+        outline-offset: 3px;
+    }
+    .qr-zoom-hint {
+        margin-top: .55rem;
+        color: #4f6a86;
+        font-size: .73rem;
+        font-weight: 700;
+        line-height: 1.35;
+    }
+    .voucher-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .58rem;
+        align-self: start;
+    }
+    .voucher-meta-box {
+        padding: .75rem .82rem;
+        border-radius: 16px;
+        background: rgba(255,255,255,.92);
+        border: 1px solid #e4edf4;
+    }
+    .voucher-meta-box span,
+    .history-meta-box span {
+        display: block;
+        color: #567291;
+        font-size: .7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin-bottom: .35rem;
+    }
+    .voucher-meta-box strong,
+    .history-meta-box strong {
+        color: #12253d;
+        font-size: .9rem;
+        line-height: 1.2;
+    }
+    .catalog-section,
+    .history-section {
+        display: grid;
+        gap: .8rem;
+    }
+    .section-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: .8rem;
+        flex-wrap: wrap;
+    }
+    .page-title {
+        margin-bottom: .28rem;
+        font-size: clamp(1.28rem, 2vw, 1.7rem);
+    }
+    .page-subtitle {
+        margin: 0;
+        max-width: 700px;
+    }
+    .section-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .48rem .72rem;
+        border-radius: 999px;
+        background: #eef7ff;
+        color: #24496f;
+        font-size: .78rem;
+        font-weight: 800;
+        border: 1px solid #d7e6f4;
+    }
+    .catalog-stack {
+        display: grid;
+        gap: .68rem;
+    }
+    .catalog-group {
+        display: grid;
+        gap: .6rem;
+        padding: .78rem;
+        border-radius: 20px;
+        background: rgba(255,255,255,.76);
+        border: 1px solid #e4edf4;
+        box-shadow: var(--shadow-soft);
+    }
+    .category-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .8rem;
+        flex-wrap: wrap;
+    }
+    .category-info {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+    }
+    .category-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        background: rgba(249, 115, 22, .14);
+        color: var(--mint-dark);
+        font-size: 1.08rem;
+        flex-shrink: 0;
+    }
+    .category-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 38px;
+        padding: .42rem .65rem;
+        border-radius: 999px;
+        background: #f5f9fc;
+        border: 1px solid #dfebf4;
+        color: #355577;
+        font-size: .76rem;
+        font-weight: 800;
+    }
+    .catalog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+        gap: .62rem;
+    }
+    .reward-card {
+        display: flex;
+        flex-direction: column;
+        gap: .52rem;
+        min-height: 100%;
+        padding: .76rem;
+        border-radius: 16px;
+        background: white;
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow-soft);
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .reward-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(249, 115, 22, .34);
+        box-shadow: var(--shadow);
+    }
+    .reward-card.is-locked {
+        background: linear-gradient(180deg, #ffffff, #f8fafc);
+    }
+    .reward-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: .7rem;
+    }
+    .reward-name {
+        margin: 0;
+        font-family: var(--font-heading);
+        font-size: .92rem;
+    }
+    .reward-points {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        padding: .38rem .62rem;
+        border-radius: 999px;
+        background: rgba(245, 158, 11, .14);
+        color: #b45309;
+        font-size: .74rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+    .reward-description {
+        margin: 0;
+        color: var(--muted);
+        font-size: .8rem;
+        line-height: 1.45;
+        min-height: 0;
+    }
+    .reward-note {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        font-size: .75rem;
+        color: var(--muted);
+        font-weight: 700;
+    }
+    .reward-note.is-locked {
+        color: #b91c1c;
+    }
+    .reward-card .btn {
+        height: 37px;
+        border-radius: 12px;
+        font-size: .83rem;
+        font-weight: 800;
+    }
+    .empty-panel {
+        padding: 1rem .95rem;
+        border-radius: 18px;
+        background: white;
+        border: 1px dashed var(--line);
+        text-align: center;
+        color: var(--muted);
+    }
+    .history-shell {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
+        gap: .72rem;
+    }
+    .history-card {
+        display: grid;
+        gap: .68rem;
+        padding: .85rem;
+        border-radius: 20px;
+        background: white;
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow-soft);
+    }
+    .history-card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: .8rem;
+        flex-wrap: wrap;
+    }
+    .history-product-name {
+        margin: 0 0 .12rem;
+        font-family: var(--font-heading);
+        font-size: 1rem;
+    }
+    .history-summary {
+        color: #557190;
+        font-size: .82rem;
+        font-weight: 700;
+    }
+    .history-body {
+        display: grid;
+        grid-template-columns: 96px minmax(0, 1fr);
+        gap: .68rem;
+        align-items: stretch;
+    }
+    .history-qr {
+        text-align: center;
+        border-radius: 16px;
+        background: #f8fbfe;
+        border: 1px solid #e3ebf3;
+        padding: .58rem;
+    }
+    .history-qr img {
+        width: 60px;
+        height: 60px;
+        padding: 5px;
+        background: white;
+        border: 1px solid #e6edf4;
+        border-radius: 12px;
+        margin-bottom: .38rem;
+    }
+    .history-code {
+        font-size: .82rem;
+        font-weight: 800;
+        color: #163a63;
+        word-break: break-word;
+    }
+    .history-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .55rem;
+        align-items: stretch;
+    }
+    .history-meta-box {
+        display: grid;
+        align-content: start;
+        min-height: 78px;
+        padding: .65rem .7rem;
+        border-radius: 14px;
+        background: #f8fafc;
+        border: 1px solid #edf2f7;
+    }
+    .history-meta-grid .history-meta-box:last-child {
+        grid-column: 1 / -1;
+        min-height: 0;
+    }
+    .history-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        flex-wrap: wrap;
+    }
+    .history-footer .product-note,
+    .summary-caption {
+        font-size: .78rem;
+    }
+    .qr-lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 1200;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    .qr-lightbox.is-open {
+        display: flex;
+    }
+    .qr-lightbox-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(8, 20, 34, .72);
+        backdrop-filter: blur(4px);
+    }
+    .qr-lightbox-dialog {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 420px);
+        padding: 1.15rem;
+        border-radius: 26px;
+        background: #ffffff;
+        border: 1px solid #dce8f2;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, .28);
+        text-align: center;
+    }
+    .qr-lightbox-close {
+        position: absolute;
+        top: .75rem;
+        right: .75rem;
+        width: 38px;
+        height: 38px;
+        border: 0;
+        border-radius: 999px;
+        background: #edf4fa;
+        color: #21466d;
+        font-size: 1.1rem;
+    }
+    .qr-lightbox-kicker {
+        color: #c2410c;
+        font-size: .74rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        margin-bottom: .5rem;
+    }
+    .qr-lightbox-title {
+        margin: 0 0 .3rem;
+        font-family: var(--font-heading);
+        font-size: 1.45rem;
+        color: #10243d;
+    }
+    .qr-lightbox-text {
+        margin: 0 0 .95rem;
+        color: #557190;
+        font-size: .9rem;
+        line-height: 1.45;
+    }
+    .qr-lightbox-card {
+        border-radius: 22px;
+        background: linear-gradient(180deg, #f9fcff 0%, #f3faf7 100%);
+        border: 1px solid #deebf4;
+        padding: 1rem;
+    }
+    .qr-lightbox-image {
+        width: min(100%, 260px);
+        aspect-ratio: 1 / 1;
+        object-fit: contain;
+        background: white;
+        border: 1px solid #deebf4;
+        border-radius: 18px;
+        padding: 12px;
+        margin-bottom: .8rem;
+    }
+    .qr-lightbox-code {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .45rem;
+        padding: .62rem .85rem;
+        border-radius: 16px;
+        background: #ffffff;
+        border: 1px solid #deebf4;
+        color: #163a63;
+        font-size: 1rem;
+        font-weight: 800;
+        word-break: break-word;
+    }
+    @media (max-width: 1100px) {
+        .points-top {
+            grid-template-columns: 1fr;
+        }
+        .balance-card {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            align-items: start;
+        }
+        .balance-hint {
+            grid-column: 1 / -1;
+        }
+    }
+    @media (max-width: 991.98px) {
+        .voucher-body {
+            grid-template-columns: 1fr;
+        }
+        .voucher-meta-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .history-shell {
+            grid-template-columns: 1fr;
+        }
+        .history-meta-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    @media (max-width: 767.98px) {
+        .balance-card,
+        .voucher-top,
+        .history-card-head {
+            grid-template-columns: 1fr;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .voucher-meta-grid,
+        .history-meta-grid {
+            grid-template-columns: 1fr;
+        }
+        .history-body {
+            grid-template-columns: 1fr;
+        }
+        .history-qr {
+            justify-self: start;
+        }
+        .catalog-grid,
+        .history-shell {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block contenido %}
-<h1 class="mb-4">Canjear Puntos</h1>
-
-<!-- Tarjeta de puntos disponibles -->
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card p-4 text-center">
-            <div style="font-size: 2.5rem; font-weight: 700; color: var(--brand-primary);">{{ usuario.puntos_acumulados }}</div>
-            <div class="text-muted mt-1">Puntos Disponibles</div>
-        </div>
-    </div>
-</div>
-
-<!-- Formulario de canje -->
-<div class="card p-4 mb-4">
-    <h2 class="mb-3">
-        <i class="bi bi-arrow-repeat me-2 text-primary"></i>Canjear mis puntos
-    </h2>
-
-    {% if form.non_field_errors %}
-        {% for error in form.non_field_errors %}
-            <div class="alert" style="background: rgba(231,76,60,0.15); border-left: 4px solid #e74c3c; color: #e74c3c; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem;">
-                {{ error }}
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    {% if form.errors %}
-        <div class="alert" style="background: rgba(231,76,60,0.15); border-left: 4px solid #e74c3c; color: #e74c3c; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem;">
-            Por favor corrige los errores indicados.
-        </div>
-    {% endif %}
-
-    <form method="post">
-        {% csrf_token %}
-        <div class="row g-3">
-            {% for field in form.visible_fields %}
-                <div class="col-md-6">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.errors %}
-                        {% for error in field.errors %}
-                            <small style="color: #e74c3c;">{{ error }}</small>
-                        {% endfor %}
-                    {% endif %}
-                    {% if field.help_text %}
-                        <small class="text-muted d-block mt-1">{{ field.help_text }}</small>
-                    {% endif %}
+<div class="points-shell">
+    <section class="points-top">
+        <div class="points-hero">
+            <div class="points-hero-copy">
+                <div class="points-hero-label"><i class="bi bi-stars"></i> Recompensas del bar</div>
+                <h1>Canjea tus puntos </h1>
+                <p>Canjea tus puntos y genera el voucher y presenta el codigo o el QR en Administracion.</p>
+                <div class="hero-pill-row">
+                    <div class="hero-pill"><i class="bi bi-qr-code"></i> Voucher con codigo y QR</div>
+                    <div class="hero-pill"><i class="bi bi-hourglass-split"></i> Vigencia automatica por 30 dias</div>
                 </div>
+            </div>
+        </div>
+
+        <aside class="balance-card">
+            <div>
+                <div class="balance-kicker">Saldo actual</div>
+                <div class="balance-number">{{ usuario.puntos_acumulados }}</div>
+                <div class="balance-label">puntos disponibles</div>
+            </div>
+            <div class="balance-list">
+                <div class="balance-item">
+                    <span>Productos activos</span>
+                    <strong>{{ productos_disponibles }}</strong>
+                </div>
+                <div class="balance-item">
+                    <span>Vouchers vigentes</span>
+                    <strong>{{ canjes_vigentes_count }}</strong>
+                </div>
+                <div class="balance-item">
+                    <span>Historial reciente</span>
+                    <strong>{{ historial|length }}</strong>
+                </div>
+            </div>        </aside>
+    </section>
+
+    {% if canje_activo %}
+    <section class="voucher-card">
+        <div class="voucher-top">
+            <div class="voucher-title">
+                <div class="eyebrow">Voucher activo</div>
+                <h2>{{ canje_activo.producto.nombre }}</h2>
+                <p>Presenta este codigo o su QR en el bar mientras el voucher este vigente.</p>
+            </div>
+            <span class="voucher-badge is-{{ canje_activo.estado_visual }}">{{ canje_activo.estado_visual_label }}</span>
+        </div>
+
+        <div class="voucher-body">
+            <div class="voucher-qr-card qr-zoom-trigger js-qr-zoom" role="button" tabindex="0" data-qr-src="{% url 'generar_voucher_qr' canje_activo.codigo %}" data-qr-code="{{ canje_activo.codigo }}" data-qr-title="{{ canje_activo.producto.nombre }}">
+                <img src="{% url 'generar_voucher_qr' canje_activo.codigo %}" alt="QR del voucher {{ canje_activo.codigo }}">
+                <div class="voucher-code-chip"><i class="bi bi-upc-scan"></i> {{ canje_activo.codigo }}</div>
+                <div class="qr-zoom-hint">Toca el codigo QR para ampliarlo y escanearlo mejor.</div>
+            </div>
+
+            <div class="voucher-meta-grid">
+                <div class="voucher-meta-box">
+                    <span>Fecha de canje</span>
+                    <strong>{{ canje_activo.fecha|date:"d/m/Y H:i" }}</strong>
+                </div>
+                <div class="voucher-meta-box">
+                    <span>Caduca</span>
+                    <strong>{{ canje_activo.fecha_caducidad|date:"d/m/Y H:i" }}</strong>
+                </div>
+                <div class="voucher-meta-box">
+                    <span>Puntos usados</span>
+                    <strong>{{ canje_activo.puntos_usados }} pts</strong>
+                </div>
+                <div class="voucher-meta-box">
+                    <span>Estado</span>
+                    <strong>{{ canje_activo.vigencia_resumen }}</strong>
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="catalog-section">
+        <div class="section-head">
+            <div>
+                <div class="eyebrow">Catalogo</div>
+                <h2 class="page-title">Productos para canjear</h2>
+                <p class="page-subtitle">Las categorias estan mas compactas para evitar espacios vacios y hacer mas rapido el canje.</p>
+            </div>
+            <div class="section-chip"><i class="bi bi-grid-3x3-gap"></i> {{ productos_disponibles }} productos activos</div>
+        </div>
+
+        <div class="catalog-stack">
+            {% for grupo in catalogo %}
+            <section class="catalog-group">
+                <div class="category-strip">
+                    <div class="category-info">
+                        <div class="category-icon"><i class="bi {{ grupo.icono }}"></i></div>
+                        <div>
+                            <h3 class="section-title mb-1">{{ grupo.etiqueta }}</h3>
+                            <div class="summary-caption">Canjea solo si tu saldo alcanza para el producto.</div>
+                        </div>
+                    </div>
+                    <div class="category-count">{{ grupo.cantidad }}</div>
+                </div>
+
+                {% if grupo.productos %}
+                <div class="catalog-grid">
+                    {% for producto in grupo.productos %}
+                    <article class="reward-card {% if not producto.puede_canjear %}is-locked{% endif %}">
+                        <div class="reward-top">
+                            <h4 class="reward-name">{{ producto.nombre }}</h4>
+                            <div class="reward-points"><i class="bi bi-star-fill"></i> {{ producto.puntos_requeridos }} pts</div>
+                        </div>
+
+                        <p class="reward-description">{{ producto.descripcion|default:"Producto listo para reclamar en el bar." }}</p>
+
+                        <div class="reward-note"><i class="bi bi-hourglass-split"></i> Voucher valido por 30 dias.</div>
+                        {% if not producto.puede_canjear %}
+                        <div class="reward-note is-locked"><i class="bi bi-lock-fill"></i> Te faltan {{ producto.puntos_faltantes }} puntos.</div>
+                        {% endif %}
+
+                        <form action="{% url 'canjear_producto' producto.id %}" method="post" class="m-0 d-grid mt-auto">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary" {% if not producto.puede_canjear %}disabled{% endif %}>
+                                {% if not producto.puede_canjear %}
+                                    Saldo insuficiente
+                                {% else %}
+                                    Canjear ahora
+                                {% endif %}
+                            </button>
+                        </form>
+                    </article>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-panel">
+                    Aun no hay productos activos en {{ grupo.etiqueta|lower }}.
+                </div>
+                {% endif %}
+            </section>
             {% endfor %}
         </div>
-        <div class="mt-4">
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-gift me-2"></i>Canjear Puntos
-            </button>
-        </div>
-    </form>
-</div>
+    </section>
 
-{% if historial %}
-<!-- Historial de movimientos de puntos -->
-<div class="card p-4 mb-4">
-    <h2 class="mb-3">
-        <i class="bi bi-clock-history me-2 text-muted"></i>Historial de Puntos Reciente
-    </h2>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Tipo</th>
-                    <th class="text-center">Puntos</th>
-                    <th>Descripcion</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in historial %}
-                <tr>
-                    <td>
-                        <i class="bi bi-calendar3 me-1 text-muted"></i>{{ item.fecha|date:"d/m/Y H:i" }}
-                    </td>
-                    <td>
-                        <span class="badge">{{ item.get_tipo_movimiento_display }}</span>
-                    </td>
-                    <td class="text-center fw-bold">
-                        {% if item.puntos > 0 %}
-                            <span style="color: #2ecc71;">+{{ item.puntos }}</span>
-                        {% else %}
-                            <span style="color: #e74c3c;">{{ item.puntos }}</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-muted">{{ item.descripcion }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <section class="history-section">
+        <div class="section-head">
+            <div>
+                <div class="eyebrow">Historial</div>
+                <h2 class="page-title">Tus vouchers recientes</h2>
+                <p class="page-subtitle">El historial se acomoda en columnas para que no quede una lista tan larga y vacia.</p>
+            </div>
+            <div class="section-chip"><i class="bi bi-clock-history"></i> {{ historial|length }} registros</div>
+        </div>
+
+        {% if historial %}
+        <div class="history-shell">
+            {% for canje in historial %}
+            <article class="history-card">
+                <div class="history-card-head">
+                    <div>
+                        <h3 class="history-product-name">{{ canje.producto.nombre }}</h3>
+                        <div class="history-summary">Canjeado el {{ canje.fecha|date:"d/m/Y" }}</div>
+                    </div>
+                    <span class="voucher-badge is-{{ canje.estado_visual }}">{{ canje.estado_visual_label }}</span>
+                </div>
+
+                <div class="history-body">
+                    <div class="history-qr qr-zoom-trigger js-qr-zoom" role="button" tabindex="0" data-qr-src="{% url 'generar_voucher_qr' canje.codigo %}" data-qr-code="{{ canje.codigo }}" data-qr-title="{{ canje.producto.nombre }}">
+                        <img src="{% url 'generar_voucher_qr' canje.codigo %}" alt="QR del voucher {{ canje.codigo }}">
+                        <div class="history-code">{{ canje.codigo }}</div>
+                        <div class="qr-zoom-hint">Toca el QR</div>
+                    </div>
+
+                    <div class="history-meta-grid">
+                        <div class="history-meta-box">
+                            <span>Fecha de canje</span>
+                            <strong>{{ canje.fecha|date:"d/m/Y H:i" }}</strong>
+                        </div>
+                        <div class="history-meta-box">
+                            <span>Caduca</span>
+                            <strong>{{ canje.fecha_caducidad|date:"d/m/Y H:i" }}</strong>
+                        </div>
+                        <div class="history-meta-box">
+                            <span>Puntos usados</span>
+                            <strong>{{ canje.puntos_usados }} pts</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="history-footer">
+                    <div class="product-note"><i class="bi bi-info-circle"></i> {{ canje.vigencia_resumen }}</div>
+                    <div class="summary-caption">Presenta el voucher solo si sigue vigente.</div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-panel">
+            Todavia no has realizado ningun canje. Cuando uses tus puntos, tus vouchers apareceran aqui.
+        </div>
+        {% endif %}
+    </section>
+    <div class="qr-lightbox" id="qrLightbox" aria-hidden="true">
+        <div class="qr-lightbox-backdrop" data-qr-close></div>
+        <div class="qr-lightbox-dialog" role="dialog" aria-modal="true" aria-labelledby="qrLightboxTitle">
+            <button type="button" class="qr-lightbox-close" data-qr-close aria-label="Cerrar QR ampliado">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <div class="qr-lightbox-kicker">Escaneo rapido</div>
+            <h3 class="qr-lightbox-title" id="qrLightboxTitle"></h3>
+            <div class="qr-lightbox-card">
+                <img id="qrLightboxImage" class="qr-lightbox-image" src="" alt="QR ampliado del voucher">
+                <div id="qrLightboxCode" class="qr-lightbox-code"></div>
+            </div>
+        </div>
     </div>
 </div>
-{% endif %}
-
-<div class="text-center mt-4">
-    <a href="{% url 'perfil' %}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-2"></i>Volver al Perfil
-    </a>
-</div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const lightbox = document.getElementById('qrLightbox');
+        const image = document.getElementById('qrLightboxImage');
+        const code = document.getElementById('qrLightboxCode');
+        const title = document.getElementById('qrLightboxTitle');
+        if (!lightbox || !image || !code || !title) return;
+
+        function openQr(trigger) {
+            image.src = trigger.dataset.qrSrc || '';
+            image.alt = 'QR ampliado del voucher ' + (trigger.dataset.qrCode || '');
+            code.innerHTML = '<i class="bi bi-upc-scan"></i> ' + (trigger.dataset.qrCode || '');
+            title.textContent = trigger.dataset.qrTitle || trigger.dataset.qrCode || 'Voucher';
+            lightbox.classList.add('is-open');
+            lightbox.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeQr() {
+            lightbox.classList.remove('is-open');
+            lightbox.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        document.querySelectorAll('.js-qr-zoom').forEach(function (trigger) {
+            trigger.addEventListener('click', function () {
+                openQr(trigger);
+            });
+            trigger.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openQr(trigger);
+                }
+            });
+        });
+
+        lightbox.querySelectorAll('[data-qr-close]').forEach(function (el) {
+            el.addEventListener('click', closeQr);
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && lightbox.classList.contains('is-open')) {
+                closeQr();
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+
+
+
+

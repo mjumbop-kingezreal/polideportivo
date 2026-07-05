@@ -1,179 +1,244 @@
-{% extends 'reservas/base.html' %}
+﻿{% extends 'reservas/base.html' %}
 
-{% block titulo %}Dashboard - Poly{% endblock %}
+{% block titulo %}Reportes - Polideportivo{% endblock %}
 
 {% block contenido %}
-<!-- Estilos de KPIs y tablas extraídos a style.css -->
-
-<div class="d-flex align-items-center justify-content-between mb-5">
+<div class="page-header report-page-header">
     <div>
-        <h1 class="brand-text fs-2 mb-1">Dashboard Insights</h1>
-        <p class="text-muted">Métricas clave y actividad reciente</p>
+        <div class="eyebrow">Analitica</div>
+        <h1 class="page-title">Centro de reportes</h1>
+        <p class="page-subtitle">Consulta el estado general del polideportivo y descarga reportes listos para analisis.</p>
+    </div>
+    <div class="export-buttons">
+        <a href="{% url 'exportar_pdf' %}" class="btn-export btn-export-pdf">
+            <i class="bi bi-file-earmark-pdf"></i>
+            <span>
+                <strong>Exportar PDF</strong>
+                <small>Reporte ejecutivo</small>
+            </span>
+        </a>
+        <a href="{% url 'exportar_excel' %}" class="btn-export btn-export-excel">
+            <i class="bi bi-file-earmark-excel"></i>
+            <span>
+                <strong>Exportar Excel</strong>
+                <small>Datos y tendencias</small>
+            </span>
+        </a>
     </div>
 </div>
 
-<!-- Grid de KPIs -->
-<div class="kpi-grid">
-    <div class="kpi-card hover-scale glow-hover">
-        <div class="kpi-icon-box" style="background: rgba(99, 102, 241, 0.1); color: var(--brand-primary);">
-            <i class="ph-fill ph-bookmarks"></i>
-        </div>
-        <div class="kpi-value">{{ total_reservas }}</div>
-        <div class="kpi-label text-uppercase">Total Reservas</div>
+<div class="reports-hero-card">
+    <div class="reports-hero-copy">
+        <span class="reports-kicker">Panel de control</span>
+        <h2>Un solo lugar para revisar actividad, tendencia y comportamiento.</h2>
+        <p>Actualizado el {{ generated_at|date:"d/m/Y H:i" }}. El reporte se enfoca en reservas, estados, canchas y deportes, sin mostrar la seccion de puntos.</p>
     </div>
-    
-    <div class="kpi-card hover-scale glow-hover">
-        <div class="kpi-icon-box" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
-            <i class="ph-fill ph-check-circle"></i>
+    <div class="reports-hero-stats">
+        <div class="report-stat-pill">
+            <strong>{{ tasa_asistencia }}%</strong>
+            <span>Asistencia</span>
         </div>
-        <div class="kpi-value">{{ reservas_confirmadas }}</div>
-        <div class="kpi-label text-uppercase">Confirmadas</div>
-    </div>
-    
-    <div class="kpi-card hover-scale glow-hover">
-        <div class="kpi-icon-box" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
-            <i class="ph-fill ph-x-circle"></i>
+        <div class="report-stat-pill">
+            <strong>{{ tasa_cancelacion }}%</strong>
+            <span>Cancelacion</span>
         </div>
-        <div class="kpi-value">{{ reservas_canceladas }}</div>
-        <div class="kpi-label text-uppercase">Canceladas</div>
-    </div>
-    
-    <div class="kpi-card hover-scale glow-hover">
-        <div class="kpi-icon-box" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
-            <i class="ph-fill ph-warning"></i>
+        <div class="report-stat-pill">
+            <strong>{{ reservas_ultimos_30 }}</strong>
+            <span>Reservas 30 dias</span>
         </div>
-        <div class="kpi-value">{{ reservas_no_asistidas }}</div>
-        <div class="kpi-label text-uppercase">No Asistidas</div>
-    </div>
-    
-    <div class="kpi-card hover-scale glow-hover">
-        <div class="kpi-icon-box" style="background: rgba(139, 92, 246, 0.1); color: var(--brand-accent);">
-            <i class="ph-fill ph-users"></i>
+        <div class="report-stat-pill">
+            <strong>{{ promedio_diario }}</strong>
+            <span>Promedio diario</span>
         </div>
-        <div class="kpi-value">{{ total_usuarios }}</div>
-        <div class="kpi-label text-uppercase">Total Usuarios</div>
-    </div>
-    
-    <div class="kpi-card hover-scale glow-hover">
-        <div class="kpi-icon-box" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8;">
-            <i class="ph-fill ph-tennis-ball"></i>
-        </div>
-        <div class="kpi-value">{{ total_canchas }}</div>
-        <div class="kpi-label text-uppercase">Canchas Activas</div>
     </div>
 </div>
 
-<!-- Últimas Reservas -->
-<div class="table-section">
-    <div class="table-section-header">
-        <h3 class="table-section-title">
-            <i class="ph-light ph-clock-counter-clockwise text-primary fs-4"></i> Actividad Reciente
-        </h3>
+<div class="kpi-grid report-kpi-grid">
+    <div class="kpi-card"><div class="kpi-icon"><i class="bi bi-ticket-perforated"></i></div><div class="kpi-value">{{ total_reservas }}</div><div class="kpi-label">Total reservas</div></div>
+    <div class="kpi-card"><div class="kpi-icon"><i class="bi bi-check-circle"></i></div><div class="kpi-value">{{ reservas_confirmadas }}</div><div class="kpi-label">Confirmadas</div></div>
+    <div class="kpi-card"><div class="kpi-icon"><i class="bi bi-person-check"></i></div><div class="kpi-value">{{ reservas_asistidas }}</div><div class="kpi-label">Asistidas</div></div>
+    <div class="kpi-card"><div class="kpi-icon bg-danger-subtle text-danger"><i class="bi bi-x-circle"></i></div><div class="kpi-value">{{ reservas_canceladas }}</div><div class="kpi-label">Canceladas</div></div>
+    <div class="kpi-card"><div class="kpi-icon bg-warning-subtle text-warning"><i class="bi bi-exclamation-triangle"></i></div><div class="kpi-value">{{ reservas_no_asistidas }}</div><div class="kpi-label">No asistidas</div></div>
+    <div class="kpi-card"><div class="kpi-icon"><i class="bi bi-people"></i></div><div class="kpi-value">{{ total_usuarios }}</div><div class="kpi-label">Usuarios</div></div>
+</div>
+
+<div class="reports-insight-grid reports-insight-grid-two">
+    <div class="report-highlight-card">
+        <span class="report-highlight-label">Cancha destacada</span>
+        <strong>{{ cancha_destacada }}</strong>
+        <p>La cancha con mayor numero de reservas registradas hasta el momento.</p>
     </div>
-    
-    <div class="table-responsive">
-        <table class="premium-table">
-            <thead>
-                <tr>
-                    <th width="8%">ID</th>
-                    <th width="30%">Usuario</th>
-                    <th width="25%">Cancha</th>
-                    <th width="22%">Fecha</th>
-                    <th width="15%" class="text-end">Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in ultimas_reservas %}
-                <tr>
-                    <td class="text-muted fw-medium">#{{ r.id|stringformat:"04d" }}</td>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="table-avatar" style="background: linear-gradient(135deg, #3f3f46, #27272a);">
-                                {{ r.usuario.nombre|make_list|first|upper }}
-                            </div>
-                            <span class="fw-medium">{{ r.usuario.nombre }}</span>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2 text-muted">
-                            <i class="ph-light ph-hexagon fs-5"></i> 
-                            {{ r.cancha.nombre }}
-                        </div>
-                    </td>
-                    <td class="text-muted"><i class="ph-light ph-calendar-blank me-2"></i>{{ r.fecha|date:"d M Y" }}</td>
-                    <td class="text-end">
-                        {% if r.estado == 'confirmada' %}
-                            <span class="badge-subtle badge-subtle-success"><i class="ph-fill ph-check-circle"></i> Confirmada</span>
-                        {% elif r.estado == 'cancelada' %}
-                            <span class="badge-subtle badge-subtle-danger"><i class="ph-fill ph-x-circle"></i> Cancelada</span>
-                        {% elif r.estado == 'no_asistida' %}
-                            <span class="badge-subtle badge-subtle-warning"><i class="ph-fill ph-warning-circle"></i> Falta</span>
-                        {% elif r.estado == 'asistida' %}
-                            <span class="badge-subtle badge-subtle-info"><i class="ph-fill ph-user-check"></i> Asistió</span>
-                        {% else %}
-                            <span class="badge-subtle" style="background: rgba(255,255,255,0.1); color: #fff;">{{ r.get_estado_display }}</span>
-                        {% endif %}
-                    </td>
-                </tr>
+    <div class="report-highlight-card">
+        <span class="report-highlight-label">Deporte dominante</span>
+        <strong>{{ deporte_destacado }}</strong>
+        <p>El deporte que concentra mas actividad dentro de la plataforma.</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-8">
+        <div class="chart-container report-chart-card">
+            <div class="report-section-head">
+                <div>
+                    <h3 class="section-title mb-1">Reservas ultimos 30 dias</h3>
+                    <p class="report-section-copy">Seguimiento de demanda diaria para detectar picos de uso.</p>
+                </div>
+                <span class="report-chip">{{ reservas_ultimos_30 }} reservas</span>
+            </div>
+            <div class="chart-wrapper"><canvas id="reservasDiaChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="chart-container report-chart-card h-100">
+            <div class="report-section-head">
+                <div>
+                    <h3 class="section-title mb-1">Distribucion por deporte</h3>
+                    <p class="report-section-copy">Participacion acumulada por tipo de deporte.</p>
+                </div>
+            </div>
+            <div class="chart-wrapper report-chart-wrapper-sm"><canvas id="deporteChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-7">
+        <div class="chart-container report-chart-card h-100">
+            <div class="report-section-head">
+                <div>
+                    <h3 class="section-title mb-1">Canchas mas populares</h3>
+                    <p class="report-section-copy">Comparativo de las canchas con mas movimiento.</p>
+                </div>
+            </div>
+            <div class="chart-wrapper"><canvas id="canchasChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-xl-5">
+        <div class="table-card h-100 report-side-card">
+            <div class="table-toolbar"><h2 class="section-title mb-0">Ranking rapido</h2></div>
+            <div class="report-ranking-list">
+                {% for cancha in top_canchas %}
+                <div class="report-ranking-item">
+                    <div>
+                        <strong>{{ cancha.nombre }}</strong>
+                        <small>{{ cancha.total }} reservas registradas</small>
+                    </div>
+                    <span>{{ cancha.porcentaje }}%</span>
+                </div>
+                {% empty %}
+                <div class="empty-state m-3">Aun no hay datos suficientes para el ranking.</div>
                 {% endfor %}
-            </tbody>
-        </table>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Historial de Puntos -->
-<div class="table-section">
-    <div class="table-section-header">
-        <h3 class="table-section-title">
-            <i class="ph-light ph-shooting-star text-warning fs-4"></i> Transacciones de Puntos
-        </h3>
-    </div>
-    
-    <div class="table-responsive">
-        <table class="premium-table">
-            <thead>
-                <tr>
-                    <th width="25%">Usuario</th>
-                    <th width="15%">Puntos</th>
-                    <th width="20%">Movimiento</th>
-                    <th width="40%">Descripción</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in historial_puntos %}
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="table-avatar" style="background: linear-gradient(135deg, var(--brand-accent), var(--brand-primary));">
-                                {{ p.usuario.nombre|make_list|first|upper }}
-                            </div>
-                            <span class="fw-medium">{{ p.usuario.nombre }}</span>
-                        </div>
-                    </td>
-                    <td>
-                        {% if p.tipo_movimiento == 'otorgado' %}
-                            <span class="text-success fw-bold">+{{ p.puntos }}</span>
-                        {% else %}
-                            <span class="text-danger fw-bold">-{{ p.puntos }}</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if p.tipo_movimiento == 'otorgado' %}
-                            <span class="badge-subtle badge-subtle-success"><i class="ph-bold ph-arrow-down-left"></i> {{ p.get_tipo_movimiento_display }}</span>
-                        {% else %}
-                            <span class="badge-subtle badge-subtle-info"><i class="ph-bold ph-arrow-up-right"></i> {{ p.get_tipo_movimiento_display }}</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-muted fs-6">
-                        <div class="d-flex flex-column">
-                            <span>{{ p.descripcion }}</span>
-                            <small class="opacity-50"><i class="ph-light ph-clock me-1"></i>{{ p.fecha|date:"d/m/Y H:i" }}</small>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="row g-4">
+    <div class="col-12">
+        <div class="table-card h-100">
+            <div class="table-toolbar"><h2 class="section-title mb-0">Ultimas reservas</h2></div>
+            <div class="table-responsive-custom">
+                <table class="table mb-0">
+                    <thead><tr><th>ID</th><th>Usuario</th><th>Cancha</th><th>Fecha</th><th>Horario</th><th>Estado</th></tr></thead>
+                    <tbody>
+                        {% for r in ultimas_reservas %}
+                        <tr>
+                            <td class="fw-bold text-muted">#{{ r.id }}</td>
+                            <td><span class="table-avatar">{{ r.usuario.nombre|make_list|first|upper }}</span>{{ r.usuario.nombre }}</td>
+                            <td>{{ r.cancha.nombre }}</td>
+                            <td>{{ r.fecha|date:"d/m/Y" }}</td>
+                            <td>{{ r.hora_inicio|time:"H:i" }} - {{ r.hora_fin|time:"H:i" }}</td>
+                            <td><span class="badge badge-{{ r.estado }}">{{ r.get_estado_display }}</span></td>
+                        </tr>
+                        {% empty %}<tr><td colspan="6"><div class="empty-state">Sin reservas recientes.</div></td></tr>{% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const mint = '#F97316';
+    const dark = '#183B56';
+    const slate = '#2F506B';
+    const amber = '#F59E0B';
+    const softMint = 'rgba(249,115,22,.14)';
+
+    new Chart(document.getElementById('reservasDiaChart'), {
+        type: 'line',
+        data: {
+            labels: {{ chart_dias_labels|safe }},
+            datasets: [{
+                label: 'Reservas',
+                data: {{ chart_dias_data|safe }},
+                borderColor: mint,
+                backgroundColor: softMint,
+                borderWidth: 3,
+                tension: .35,
+                fill: true,
+                pointRadius: 3,
+                pointHoverRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(226,232,240,.8)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('canchasChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ chart_canchas_labels|safe }},
+            datasets: [{
+                label: 'Reservas',
+                data: {{ chart_canchas_data|safe }},
+                borderRadius: 12,
+                backgroundColor: [mint, dark, slate, '#C2410C', amber]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(226,232,240,.8)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('deporteChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ chart_deporte_labels|safe }},
+            datasets: [{
+                data: {{ chart_deporte_data|safe }},
+                backgroundColor: [mint, dark, slate, '#FDBA74', amber],
+                borderWidth: 0,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { usePointStyle: true, boxWidth: 10, padding: 16 }
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}

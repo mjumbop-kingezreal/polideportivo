@@ -1,65 +1,108 @@
-"""Vistas del programa de puntos: canje y configuración."""
+"""Vistas del programa de puntos: canje y configuracion."""
 
-from django.shortcuts import render, redirect
 from django.contrib import messages
-from ..models import PuntosHistorial, ConfiguracionPuntos
-from ..forms import CanjePuntosForm, ConfiguracionPuntosForm
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+
+from ..codigos import generar_codigo_voucher
+from ..forms import ConfiguracionPuntosForm
+from ..models import CanjeProducto, ConfiguracionPuntos, ProductoBar, PuntosHistorial, Usuario
 from .helpers import login_requerido, rol_requerido
 
 
-# ──────────────────────────────────────────────
-# 14. Canjear Puntos (P4: nueva vista)
-# ──────────────────────────────────────────────
+CATALOGO_CATEGORIAS = (
+    ('bebida', 'Bebidas', 'bi-cup-straw'),
+    ('snack', 'Snacks', 'bi-cookie'),
+    ('otro', 'Otros', 'bi-gift'),
+)
+
 
 @login_requerido
 def canjear_puntos_view(request):
-    """Permite al usuario canjear sus puntos acumulados por beneficios."""
+    """Muestra el catalogo, el voucher activo y el historial de canjes."""
     usuario = request.usuario
-    config = ConfiguracionPuntos.obtener()
+    productos = list(
+        ProductoBar.objects.filter(disponible=True).order_by('categoria', 'puntos_requeridos', 'nombre')
+    )
+    for producto in productos:
+        producto.puede_canjear = producto.puntos_requeridos <= usuario.puntos_acumulados
+        producto.puntos_faltantes = max(producto.puntos_requeridos - usuario.puntos_acumulados, 0)
 
-    if request.method == 'POST':
-        form = CanjePuntosForm(request.POST, usuario=usuario)
-        if form.is_valid():
-            puntos = form.cleaned_data['puntos_a_canjear']
+    catalogo = []
+    for clave, etiqueta, icono in CATALOGO_CATEGORIAS:
+        items = [producto for producto in productos if producto.categoria == clave]
+        catalogo.append({
+            'clave': clave,
+            'etiqueta': etiqueta,
+            'icono': icono,
+            'productos': items,
+            'cantidad': len(items),
+        })
 
-            if puntos < config.minimo_canje:
-                messages.error(
-                    request,
-                    f'El mínimo de puntos para canjear es {config.minimo_canje}.'
-                )
-            else:
-                # Descontar puntos
-                usuario.puntos_acumulados -= puntos
-                usuario.save()
+    historial = list(
+        CanjeProducto.objects.filter(usuario=usuario)
+        .select_related('producto')
+        .order_by('-fecha')[:20]
+    )
+    canjes_vigentes = [canje for canje in historial if canje.esta_vigente]
+    canje_activo = canjes_vigentes[0] if canjes_vigentes else None
 
-                # Registrar en historial
-                PuntosHistorial.objects.create(
-                    usuario=usuario,
-                    puntos=puntos,
-                    tipo_movimiento='canjeado',
-                    descripcion=f'Canje de {puntos} puntos por beneficios.',
-                )
-
-                messages.success(
-                    request,
-                    f'¡Has canjeado {puntos} puntos exitosamente!'
-                )
-                return redirect('canjear_puntos')
-    else:
-        form = CanjePuntosForm(usuario=usuario)
-
-    historial = usuario.puntos_historial.order_by('-fecha')[:20]
     return render(request, 'reservas/canjear_puntos.html', {
-        'form': form,
         'usuario': usuario,
+        'catalogo': catalogo,
         'historial': historial,
-        'config': config,
+        'canje_activo': canje_activo,
+        'productos_disponibles': len(productos),
+        'canjes_vigentes_count': len(canjes_vigentes),
+        'canjes_caducados_count': len(historial) - len(canjes_vigentes),
     })
 
 
-# ──────────────────────────────────────────────
-# 15. Admin: Configuración de Puntos (P10)
-# ──────────────────────────────────────────────
+@login_requerido
+def canjear_producto_view(request, producto_id):
+    """Procesa el canje de un producto especifico y genera el voucher."""
+    if request.method != 'POST':
+        return redirect('canjear_puntos')
+
+    usuario = request.usuario
+    producto = get_object_or_404(ProductoBar, id=producto_id, disponible=True)
+
+    with transaction.atomic():
+        usuario_actual = Usuario.objects.select_for_update().get(id=usuario.id)
+
+        if producto.puntos_requeridos > usuario_actual.puntos_acumulados:
+            messages.error(
+                request,
+                f'No tienes suficientes puntos para canjear {producto.nombre}. '
+                f'Requieres {producto.puntos_requeridos} pts pero tienes {usuario_actual.puntos_acumulados}.'
+            )
+            return redirect('canjear_puntos')
+
+        usuario_actual.puntos_acumulados -= producto.puntos_requeridos
+        usuario_actual.save(update_fields=['puntos_acumulados'])
+
+        canje = CanjeProducto.objects.create(
+            usuario=usuario_actual,
+            producto=producto,
+            puntos_usados=producto.puntos_requeridos,
+            codigo=generar_codigo_voucher(),
+            estado=CanjeProducto.Estado.PENDIENTE,
+        )
+
+        PuntosHistorial.objects.create(
+            usuario=usuario_actual,
+            puntos=producto.puntos_requeridos,
+            tipo_movimiento=PuntosHistorial.TipoMovimiento.CANJEADO,
+            descripcion=f'Canje de producto: {producto.nombre}',
+        )
+
+        messages.success(
+            request,
+            f'Canje realizado: {producto.nombre}. Tu codigo es {canje.codigo} y vence el {canje.fecha_caducidad:%d/%m/%Y}.'
+        )
+
+    return redirect('canjear_puntos')
+
 
 @rol_requerido('administrador', 'municipio')
 def admin_config_puntos_view(request):
@@ -70,7 +113,7 @@ def admin_config_puntos_view(request):
         form = ConfiguracionPuntosForm(request.POST, instance=config)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Configuración de puntos actualizada correctamente.')
+            messages.success(request, 'Configuracion de puntos actualizada correctamente.')
             return redirect('admin_config_puntos')
     else:
         form = ConfiguracionPuntosForm(instance=config)

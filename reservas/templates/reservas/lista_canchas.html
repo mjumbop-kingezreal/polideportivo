@@ -1,78 +1,94 @@
 {% extends 'reservas/base.html' %}
+{% load static %}
 
 {% block titulo %}Canchas - Polideportivo{% endblock %}
 
 {% block contenido %}
-<h1 class="mb-4">Canchas Disponibles</h1>
-
-<!-- Filtros compactos en grid responsivo -->
-<div class="card p-4 mb-4">
-    <form method="get">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label">
-                    <i class="bi bi-trophy me-2 text-muted"></i>Deporte
-                </label>
-                <select name="tipo" class="form-select">
-                    <option value="">Todos</option>
-                    {% for value, label in tipos %}
-                        <option value="{{ value }}" {% if filtro_tipo == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">
-                    <i class="bi bi-check-circle me-2 text-muted"></i>Estado
-                </label>
-                <select name="estado" class="form-select">
-                    <option value="">Todos</option>
-                    {% for value, label in estados %}
-                        <option value="{{ value }}" {% if filtro_estado == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-4">
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-funnel me-2"></i>Filtrar
-                </button>
-            </div>
-        </div>
-    </form>
+<div class="page-header">
+    <div>
+        <div class="eyebrow">Polideportivo</div>
+        <h1 class="page-title">Canchas y espacios deportivos</h1>
+        
+    </div>
+    <a href="{% url 'disponibilidad' %}" class="btn btn-primary"><i class="bi bi-calendar2-week me-2"></i>Consultar disponibilidad</a>
 </div>
 
-<!-- Grid de canchas -->
-<div class="row g-4">
-    {% for cancha in canchas %}
-    <div class="col-md-6 col-lg-4">
-        <div class="card p-4 h-100">
-            <h3 class="mb-3">{{ cancha.nombre }}</h3>
-            <p class="mb-2">
-                <i class="bi bi-trophy me-2 text-primary"></i>{{ cancha.get_tipo_deporte_display }}
-            </p>
-            <p class="mb-2">
-                <i class="bi bi-geo-alt me-2 text-primary"></i>{{ cancha.ubicacion }}
-            </p>
-            <p class="mb-2">
-                <span class="badge badge-{{ cancha.estado }}">{{ cancha.get_estado_display }}</span>
-            </p>
-            {% if cancha.descripcion %}
-                <p class="text-muted mt-2" style="font-size: 0.85rem;">{{ cancha.descripcion }}</p>
-            {% endif %}
-            {% if cancha.estado == 'disponible' %}
-                <div class="mt-auto pt-3">
-                    <a href="{% url 'disponibilidad' %}?cancha={{ cancha.id }}" class="btn btn-primary w-100">
-                        <i class="bi bi-eye me-2"></i>Ver Disponibilidad
-                    </a>
-                </div>
-            {% endif %}
+<div class="filter-panel">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div>
+            <h2 class="section-title mb-1">Buscar por deporte</h2>
+            
         </div>
+        <span class="badge bg-light text-secondary">{{ canchas|length }} resultado{{ canchas|length|pluralize }}</span>
     </div>
-    {% empty %}
-    <div class="col-12">
-        <div class="card p-5 text-center">
-            <p class="text-muted mb-0">No se encontraron canchas.</p>
+    <div class="chip-group">
+        <a href="{% url 'lista_canchas' %}" class="filter-chip {% if not filtro_tipo %}active{% endif %}">Todos</a>
+        {% for value, label in tipos %}
+        <a href="{% url 'lista_canchas' %}?tipo={{ value }}" class="filter-chip {% if filtro_tipo == value %}active{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="interactive-dashboard">
+    <aside class="map-selection-panel">
+        <div class="map-selection-head">
+            <div>
+                <span class="map-selection-kicker">Elija la cancha</span>
+                <h2 class="section-title mb-1">Canchas disponibles</h2>
+                
+            </div>
+            <span class="badge bg-light text-secondary">{{ canchas|length }} opcion{{ canchas|length|pluralize:"es" }}</span>
         </div>
-    </div>
-    {% endfor %}
+        <div class="map-court-card-list is-sidebar-list">
+            {% for cancha in canchas %}
+                <a href="{% url 'disponibilidad' %}?cancha={{ cancha.id }}" class="map-court-card {% if request.GET.cancha == cancha.id|stringformat:'s' %}is-selected{% endif %}">
+                    {% if cancha.tipo_deporte == 'futbol' %}
+                        <img src="{% static 'img/cancha-futbol.jpg' %}?v={{ image_version }}" alt="{{ cancha.nombre }}">
+                    {% elif cancha.tipo_deporte == 'baloncesto' %}
+                        <img src="{% static 'img/cancha-basquet.jpg' %}?v={{ image_version }}" alt="{{ cancha.nombre }}">
+                    {% elif cancha.tipo_deporte == 'voleibol' %}
+                        <img src="{% static 'img/cancha-voley.jpg' %}?v={{ image_version }}" alt="{{ cancha.nombre }}">
+                    {% elif cancha.tipo_deporte == 'tenis' %}
+                        <img src="{% static 'img/cancha-tenis.jpg' %}?v={{ image_version }}" alt="{{ cancha.nombre }}">
+                    {% else %}
+                        <img src="{% static 'img/cancha-general.jpg' %}?v={{ image_version }}" alt="{{ cancha.nombre }}">
+                    {% endif %}
+                    <span class="map-court-card-body">
+                        <span class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                            <strong>{{ cancha.nombre }}</strong>
+                            <span class="badge badge-{{ cancha.estado }}">{{ cancha.get_estado_display }}</span>
+                        </span>
+                        <small><i class="bi bi-activity me-1"></i>{{ cancha.tipo_deporte_label }}</small>
+                        <small><i class="bi bi-people me-1"></i>{{ cancha.capacidad_jugadores_label }}</small>
+                        <small><i class="bi bi-geo-alt me-1"></i>{{ cancha.ubicacion }}</small>
+                    </span>
+                </a>
+            {% empty %}
+                <div class="empty-state app-card">No hay canchas para ese deporte.</div>
+            {% endfor %}
+        </div>
+    </aside>
+
+    <section class="map-stage-card">
+        <div class="map-toolbar">
+            <div>
+                <h2 class="section-title mb-1">Mapa general</h2>
+                
+            </div>
+            <div class="map-legend">
+                <span><i class="legend-dot disponible"></i>Disponible</span>
+                <span><i class="legend-dot ocupado"></i>Fuera de servicio</span>
+                <span><i class="legend-dot mantenimiento"></i>Mantenimiento</span>
+            </div>
+        </div>
+
+        <div class="map-visual-frame">
+            <div class="svg-map-shell" id="courtMapShell">
+                <svg class="court-svg-map" viewBox="0 0 1264 843" role="img" aria-label="Mapa interactivo de canchas del polideportivo">
+                    <image href="{% static 'img/Mapa_canchas.png' %}" x="0" y="0" width="1264" height="843" preserveAspectRatio="xMidYMid meet"></image>
+</svg>
+            </div>
+        </div>
+    </section>
 </div>
 {% endblock %}

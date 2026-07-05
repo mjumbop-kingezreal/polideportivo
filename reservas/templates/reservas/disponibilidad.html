@@ -1,99 +1,167 @@
 {% extends 'reservas/base.html' %}
+{% load static %}
 
-{% block titulo %}Disponibilidad - Poly{% endblock %}
+{% block titulo %}Disponibilidad - Polideportivo{% endblock %}
 
 {% block contenido %}
-<!-- Estilos de filtro y grilla extraidos a style.css -->
-
-<div class="d-flex align-items-center justify-content-between mb-4">
+<div class="page-header availability-header">
     <div>
-        <h1 class="brand-text fs-2 mb-1">Disponibilidad</h1>
-        <p class="text-muted">Explora el calendario y reserva tu cancha</p>
+        <div class="eyebrow">Agenda deportiva</div>
+        <h1 class="page-title">Disponibilidad</h1>
+        <p class="page-subtitle">Un calendario semanal claro para revisar rapido la cancha, el dia y los horarios disponibles.</p>
     </div>
 </div>
 
-<div class="filter-panel">
-    <form method="get" class="row g-4 align-items-end">
-        <div class="col-md-5">
-            <label class="form-label text-muted fw-medium mb-2"><i class="ph-light ph-hexagon me-1"></i> Selecciona la Cancha</label>
-            <select name="cancha" class="form-select form-control-hyper">
-                <option value="">Todas las canchas...</option>
+<div class="filter-panel availability-filter-panel">
+    <div class="availability-map-action">
+        <button type="button" class="btn btn-soft" data-bs-toggle="modal" data-bs-target="#availabilityMapModal">
+            <i class="bi bi-map me-1"></i>Ver mapa
+        </button>
+    </div>
+
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-lg-5">
+            <label class="form-label"><i class="bi bi-shield-check me-1"></i>Cancha</label>
+            <select name="cancha" class="form-select">
+                <option value="">Selecciona una cancha</option>
                 {% for c in canchas %}
-                    <option value="{{ c.id }}" {% if cancha_sel and cancha_sel.id == c.id %}selected{% endif %}>
-                        {{ c.nombre }} ({{ c.get_tipo_deporte_display }})
-                    </option>
+                    <option value="{{ c.id }}" {% if cancha_sel and cancha_sel.id == c.id %}selected{% endif %}>{{ c.nombre }} ({{ c.tipo_deporte_label }})</option>
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-5">
-            <label class="form-label text-muted fw-medium mb-2"><i class="ph-light ph-calendar-blank me-1"></i> Fecha de Reserva</label>
-            <!-- Nota: Algunos navegadores inyectan estilos feos al input date en dark mode, form-control-hyper lo minimiza -->
-            <input type="date" name="fecha" class="form-control form-control-hyper" value="{{ fecha }}">
+        <div class="col-lg-5">
+            <label class="form-label"><i class="bi bi-calendar-event me-1"></i>Fecha de reserva</label>
+            <input type="date" name="fecha" class="form-control" value="{{ fecha|default:hoy }}" max="9999-12-31">
         </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-brand w-100 py-2 d-flex justify-content-center align-items-center gap-2" style="height: 48px;">
-                <i class="ph-bold ph-magnifying-glass"></i> Explorar
-            </button>
+        <div class="col-lg-2">
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i>Buscar</button>
         </div>
     </form>
 </div>
-
-{% if cancha_sel and horarios %}
-    <div class="d-flex align-items-center justify-content-between mb-4 mt-2">
-        <h3 class="fw-semibold text-white fs-4 m-0">
-            <i class="ph-light ph-clock text-primary me-2"></i> {{ cancha_sel.nombre }}
-        </h3>
-        <span class="badge-neon badge-neon-secondary"><i class="ph-light ph-calendar"></i> {{ fecha }}</span>
-    </div>
-
-    <div class="time-grid">
-        {% for h in horarios %}
-            <div class="time-slot {% if h.is_past %}slot-pasado{% elif h.is_ocupado %}slot-ocupado{% else %}slot-libre{% endif %}">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="slot-time">
-                        {{ h.hora_inicio|time:"H:i" }} <span class="text-muted fw-normal fs-6 mx-1">→</span> {{ h.hora_fin|time:"H:i" }}
-                    </div>
-                    
-                    {% if h.is_past %}
-                        <span class="badge-neon badge-neon-secondary"><i class="ph-bold ph-clock-counter-clockwise"></i> Pasado</span>
-                    {% elif h.is_ocupado %}
-                        <span class="badge-neon badge-neon-danger"><i class="ph-bold ph-x"></i> Ocupado</span>
-                    {% else %}
-                        <span class="badge-neon badge-neon-success"><i class="ph-bold ph-check"></i> Libre</span>
-                    {% endif %}
-                </div>
-                
-                <div class="slot-action">
-                    {% if h.is_past %}
-                        <div class="text-muted fs-6 text-center mt-3"><i class="ph-light ph-lock-key me-1"></i> No disponible</div>
-                    {% elif h.is_ocupado %}
-                        <div class="text-danger opacity-75 fs-6 text-center mt-3"><i class="ph-light ph-prohibit me-1"></i> Slot reservado</div>
-                    {% else %}
-                        <a href="{% url 'crear_reserva' %}?cancha={{ cancha_sel.id }}&fecha={{ fecha }}&hora_inicio={{ h.hora_inicio|time:'H:i' }}&hora_fin={{ h.hora_fin|time:'H:i' }}" 
-                           class="btn btn-reserve d-flex justify-content-center align-items-center gap-2 text-decoration-none">
-                            Reservar Ahora <i class="ph-bold ph-arrow-right"></i>
-                        </a>
-                    {% endif %}
+{% if cancha_sel %}
+<div class="availability-dashboard">
+    <aside class="availability-sidebar-panel">
+        <div class="availability-sidebar-card">
+            <div class="availability-mini-month-head">
+                <div>
+                    <strong>{{ selected_month_name }} {{ fecha_obj.year }}</strong>
+                    <small>{{ selected_day_name }}, {{ fecha_obj.day }}</small>
                 </div>
             </div>
-        {% endfor %}
-    </div>
+            <div class="availability-mini-weekdays">
+                {% for weekday in month_weekdays %}
+                <span>{{ weekday }}</span>
+                {% endfor %}
+            </div>
+            <div class="availability-mini-month-grid">
+                {% for week in month_weeks %}
+                    {% for cell in week %}
+                    <a href="{% url 'disponibilidad' %}?cancha={{ cancha_sel.id }}&fecha={{ cell.date|date:'Y-m-d' }}" class="availability-mini-day {% if cell.outside %}is-outside{% endif %} {% if cell.today %}is-today{% endif %} {% if cell.selected %}is-selected{% endif %}">{{ cell.day }}</a>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
 
-{% elif cancha_sel %}
-    <div class="empty-state">
-        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4" style="width: 80px; height: 80px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle);">
-            <i class="ph-light ph-calendar-slash text-muted" style="font-size: 2.5rem;"></i>
+        <div class="availability-sidebar-card">
+            <div class="availability-court-chip">
+                <span class="availability-court-icon"><i class="bi bi-calendar-week"></i></span>
+                <div>
+                    <strong>{{ cancha_sel.nombre }}</strong>
+                    <small>{{ cancha_sel.tipo_deporte_label }}</small>
+                </div>
+            </div>
+            <p class="availability-sidebar-copy">{{ cancha_sel.ubicacion }}</p>
+            <div class="availability-stat-stack">
+                <div class="availability-stat-pill"><span>Total</span><strong>{{ selected_stats.total }}</strong></div>
+                <div class="availability-stat-pill success"><span>Libres</span><strong>{{ selected_stats.free }}</strong></div>
+                <div class="availability-stat-pill danger"><span>Ocupados</span><strong>{{ selected_stats.occupied }}</strong></div>
+            </div>
         </div>
-        <h4 class="text-white fw-medium mb-2">No hay horarios configurados</h4>
-        <p class="text-muted mx-auto" style="max-width: 400px;">El administrador no ha habilitado franjas horarias para esta cancha en la fecha seleccionada.</p>
-    </div>
-{% elif not fecha and not cancha_sel %}
-    <div class="empty-state">
-        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4" style="width: 80px; height: 80px; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2);">
-            <i class="ph-light ph-magnifying-glass text-primary" style="font-size: 2.5rem;"></i>
+    </aside>
+
+    <section class="availability-mainboard">
+        <div class="availability-main-card">
+            <div class="availability-agenda-head">
+                <div>
+                    <div class="eyebrow mb-1">{{ selected_day_name }}</div>
+                    <h2 class="section-title mb-0">{{ fecha_obj|date:"d/m/Y" }}</h2>
+                    <p class="text-muted mb-0">Horarios creados para este dia en {{ cancha_sel.nombre }}.</p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="badge badge-disponible"><i class="bi bi-check-circle"></i>Disponible</span>
+                    <span class="badge badge-cancelada"><i class="bi bi-x-circle"></i>Ocupado</span>
+                    <span class="badge bg-secondary-subtle text-secondary"><i class="bi bi-clock-history"></i>Pasado</span>
+                </div>
+            </div>
+
+            {% if horarios %}
+            <div class="availability-agenda-list">
+                {% for h in horarios %}
+                <article class="availability-slot-card {% if h.is_past %}slot-pasado{% elif h.is_ocupado %}slot-ocupado{% else %}slot-libre{% endif %}">
+                    <div>
+                        <div class="slot-time">{{ h.hora_inicio|time:"H:i" }} - {{ h.hora_fin|time:"H:i" }}</div>
+                        <div class="availability-slot-subtitle">Franja lista para reservar</div>
+                    </div>
+                    <div>
+                        {% if h.is_past %}
+                            <span class="badge bg-secondary-subtle text-secondary">Pasado</span>
+                        {% elif h.is_ocupado %}
+                            <span class="badge badge-cancelada">Ocupado</span>
+                        {% else %}
+                            <span class="badge badge-disponible">Disponible</span>
+                        {% endif %}
+                    </div>
+                    <div class="availability-slot-action">
+                        {% if h.is_past %}
+                            <button class="btn btn-outline-secondary w-100" disabled><i class="bi bi-lock me-1"></i>No disponible</button>
+                        {% elif h.is_ocupado %}
+                            <button class="btn btn-outline-secondary w-100" disabled><i class="bi bi-slash-circle me-1"></i>Reservado</button>
+                        {% else %}
+                            <a class="btn btn-primary w-100" href="{% url 'crear_reserva' %}?cancha={{ cancha_sel.id }}&fecha={{ fecha }}&hora_inicio={{ h.hora_inicio|time:'H:i' }}&hora_fin={{ h.hora_fin|time:'H:i' }}">
+                                Reservar ahora <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state dashboard-empty-state">
+                <div class="empty-icon"><i class="bi bi-calendar-x"></i></div>
+                <h3 class="section-title">No hay horarios configurados</h3>
+                <p>Para este dia no se han creado horarios todavia para la cancha seleccionada.</p>
+            </div>
+            {% endif %}
         </div>
-        <h4 class="text-white fw-medium mb-2">Descubre tu próximo partido</h4>
-        <p class="text-muted mx-auto" style="max-width: 400px;">Selecciona una instalación deportiva y la fecha deseada en el panel superior para visualizar la cuadrícula interactiva de horarios.</p>
-    </div>
+    </section>
+</div>
+{% else %}
+<div class="empty-state app-card">
+    <div class="empty-icon"><i class="bi bi-calendar2-week"></i></div>
+    <h3 class="section-title">Selecciona cancha y fecha</h3>
+    <p>Cuando elijas una cancha veras un dashboard semanal con calendario mensual, resumen y agenda del dia.</p>
+</div>
 {% endif %}
+
+<div class="modal fade map-modal" id="availabilityMapModal" tabindex="-1" aria-labelledby="availabilityMapModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <div class="eyebrow mb-1">Mapa general</div>
+                    <h2 class="modal-title section-title mb-0" id="availabilityMapModalLabel">Polideportivo</h2>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <img src="{% static 'img/Mapa_canchas.png' %}" alt="Mapa general de canchas del polideportivo" class="availability-map-large">
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
+
+
+
+
+
