@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
 from ..models import Cancha, HorarioDisponible, Usuario, ProductoBar
 from ..forms import CanchaForm, EditarRolForm, ProductoBarForm
 from .helpers import rol_requerido
@@ -24,7 +25,22 @@ def admin_canchas_view(request):
         cancha_editar = get_object_or_404(Cancha, id=edit_id)
 
     if request.method == 'POST':
+        accion = request.POST.get('accion')
         cancha_id = request.POST.get('cancha_id')
+
+        if accion == 'eliminar_cancha':
+            cancha = get_object_or_404(Cancha, id=cancha_id)
+            if cancha.reservas.exists():
+                messages.error(
+                    request,
+                    'No se puede eliminar esta cancha porque ya tiene reservas registradas. '
+                    'Puedes cambiar su estado a Fuera de Servicio.'
+                )
+            else:
+                cancha.delete()
+                messages.success(request, 'Cancha eliminada correctamente.')
+            return redirect('admin_canchas')
+
         if cancha_id:
             instancia = get_object_or_404(Cancha, id=cancha_id)
             form = CanchaForm(request.POST, instance=instancia)
@@ -211,7 +227,21 @@ def admin_productos_bar_view(request):
         producto_editar = get_object_or_404(ProductoBar, id=edit_id)
 
     if request.method == 'POST':
+        accion = request.POST.get('accion')
         producto_id = request.POST.get('producto_id')
+
+        if accion == 'eliminar_producto':
+            producto = get_object_or_404(ProductoBar, id=producto_id)
+            try:
+                producto.delete()
+                messages.success(request, 'Producto del bar eliminado correctamente.')
+            except ProtectedError:
+                messages.error(
+                    request,
+                    'No se puede eliminar este producto porque ya tiene canjes registrados.'
+                )
+            return redirect('admin_productos_bar')
+
         if producto_id:
             instancia = get_object_or_404(ProductoBar, id=producto_id)
             form = ProductoBarForm(request.POST, instance=instancia)

@@ -8,7 +8,6 @@
     <div>
         <div class="eyebrow">Polideportivo</div>
         <h1 class="page-title">Canchas y espacios deportivos</h1>
-        
     </div>
     <a href="{% url 'disponibilidad' %}" class="btn btn-primary"><i class="bi bi-calendar2-week me-2"></i>Consultar disponibilidad</a>
 </div>
@@ -17,7 +16,6 @@
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
         <div>
             <h2 class="section-title mb-1">Buscar por deporte</h2>
-            
         </div>
         <span class="badge bg-light text-secondary">{{ canchas|length }} resultado{{ canchas|length|pluralize }}</span>
     </div>
@@ -34,14 +32,17 @@
         <div class="map-selection-head">
             <div>
                 <span class="map-selection-kicker">Elija la cancha</span>
-                <h2 class="section-title mb-1">Canchas disponibles</h2>
-                
+                <h2 class="section-title mb-1">Canchas registradas</h2>
             </div>
             <span class="badge bg-light text-secondary">{{ canchas|length }} opcion{{ canchas|length|pluralize:"es" }}</span>
         </div>
         <div class="map-court-card-list is-sidebar-list">
             {% for cancha in canchas %}
+                {% if cancha.estado == 'disponible' %}
                 <a href="{% url 'disponibilidad' %}?cancha={{ cancha.id }}" class="map-court-card {% if request.GET.cancha == cancha.id|stringformat:'s' %}is-selected{% endif %}">
+                {% else %}
+                <div class="map-court-card is-unavailable" aria-disabled="true" title="Esta cancha no esta disponible para reservas">
+                {% endif %}
                     {% if cancha.tipo_deporte == 'futbol' %}
                         <img src="{% static 'img/cancha-futbol.jpg' %}?v={{ image_version }}" alt="{{ cancha.nombre }}">
                     {% elif cancha.tipo_deporte == 'baloncesto' %}
@@ -54,15 +55,24 @@
                         <img src="{% static 'img/cancha-general.jpg' %}?v={{ image_version }}" alt="{{ cancha.nombre }}">
                     {% endif %}
                     <span class="map-court-card-body">
-                        <span class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                        <span class="map-court-card-title">
                             <strong>{{ cancha.nombre }}</strong>
                             <span class="badge badge-{{ cancha.estado }}">{{ cancha.get_estado_display }}</span>
                         </span>
-                        <small><i class="bi bi-activity me-1"></i>{{ cancha.tipo_deporte_label }}</small>
-                        <small><i class="bi bi-people me-1"></i>{{ cancha.capacidad_jugadores_label }}</small>
-                        <small><i class="bi bi-geo-alt me-1"></i>{{ cancha.ubicacion }}</small>
+                        <span class="map-court-meta"><i class="bi bi-activity"></i><span>{{ cancha.tipo_deporte_label }}</span></span>
+                        <span class="map-court-meta"><i class="bi bi-people"></i><span>{{ cancha.capacidad_jugadores_label }}</span></span>
+                        <span class="map-court-meta"><i class="bi bi-geo-alt"></i><span>{{ cancha.ubicacion }}</span></span>
+                        {% if cancha.estado == 'disponible' %}
+                        <span class="court-card-action is-available"><i class="bi bi-arrow-right-circle"></i>Ver horarios</span>
+                        {% else %}
+                        <span class="court-card-action is-locked"><i class="bi bi-lock-fill"></i>No disponible para reservar</span>
+                        {% endif %}
                     </span>
+                {% if cancha.estado == 'disponible' %}
                 </a>
+                {% else %}
+                </div>
+                {% endif %}
             {% empty %}
                 <div class="empty-state app-card">No hay canchas para ese deporte.</div>
             {% endfor %}
@@ -73,7 +83,6 @@
         <div class="map-toolbar">
             <div>
                 <h2 class="section-title mb-1">Mapa general</h2>
-                
             </div>
             <div class="map-legend">
                 <span><i class="legend-dot disponible"></i>Disponible</span>
@@ -86,9 +95,114 @@
             <div class="svg-map-shell" id="courtMapShell">
                 <svg class="court-svg-map" viewBox="0 0 1264 843" role="img" aria-label="Mapa interactivo de canchas del polideportivo">
                     <image href="{% static 'img/Mapa_canchas.png' %}" x="0" y="0" width="1264" height="843" preserveAspectRatio="xMidYMid meet"></image>
-</svg>
+                </svg>
             </div>
         </div>
     </section>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media (min-width: 1200px) {
+        .interactive-dashboard {
+            grid-template-columns: minmax(520px, 560px) minmax(0, 1fr) !important;
+            gap: 1.35rem !important;
+        }
+    }
+
+    .map-selection-panel {
+        min-width: 0;
+    }
+
+    .map-court-card-list {
+        gap: 1rem !important;
+        padding-right: .35rem !important;
+    }
+
+    .map-court-card {
+        grid-template-columns: 128px minmax(0, 1fr) !important;
+        min-height: 176px !important;
+        border-radius: 22px !important;
+        overflow: hidden !important;
+    }
+
+    .map-court-card img {
+        min-height: 176px !important;
+        height: 100% !important;
+    }
+
+    .map-court-card-body {
+        align-content: start !important;
+        gap: .52rem !important;
+        min-width: 0 !important;
+        padding: 1rem 1.05rem !important;
+    }
+
+    .map-court-card-title {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start !important;
+        gap: .65rem !important;
+    }
+
+    .map-court-card-title strong {
+        display: block;
+        min-width: 0;
+        font-size: 1.08rem !important;
+        line-height: 1.22 !important;
+        white-space: normal !important;
+    }
+
+    .map-court-card-title .badge {
+        white-space: nowrap;
+    }
+
+    .map-court-meta {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: .48rem !important;
+        min-width: 0 !important;
+        font-size: .92rem !important;
+        line-height: 1.3 !important;
+    }
+
+    .map-court-meta span {
+        display: block;
+        min-width: 0;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+    }
+
+    .court-card-action {
+        margin-top: .25rem !important;
+        white-space: normal !important;
+    }
+
+    @media (max-width: 1199.98px) {
+        .map-court-card {
+            min-height: 160px !important;
+        }
+        .map-court-card img {
+            min-height: 160px !important;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .map-court-card {
+            grid-template-columns: 104px minmax(0, 1fr) !important;
+            min-height: 172px !important;
+        }
+        .map-court-card img {
+            min-height: 172px !important;
+        }
+        .map-court-card-body {
+            padding: .85rem !important;
+        }
+        .map-court-card-title {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 {% endblock %}

@@ -1,13 +1,12 @@
 {% extends 'reservas/base.html' %}
 
-{% block titulo %}Gestión de Productos del Bar - Polideportivo{% endblock %}
+{% block titulo %}Gestion de Productos del Bar - Polideportivo{% endblock %}
 
 {% block contenido %}
 <div class="page-header">
     <div>
-        <div class="eyebrow">Administración</div>
+        <div class="eyebrow">Administracion</div>
         <h1 class="page-title">Productos del Bar</h1>
-        <p class="page-subtitle">Crea y edita los productos disponibles para canjear con puntos en el bar.</p>
     </div>
 </div>
 
@@ -35,6 +34,11 @@
                     {{ form.puntos_requeridos.errors }}
                 </div>
                 <div>
+                    <label class="form-label" for="{{ form.stock.id_for_label }}">{{ form.stock.label }}</label>
+                    {{ form.stock }}
+                    {{ form.stock.errors }}
+                </div>
+                <div>
                     <label class="form-label" for="{{ form.descripcion.id_for_label }}">{{ form.descripcion.label }}</label>
                     {{ form.descripcion }}
                     {{ form.descripcion.errors }}
@@ -47,7 +51,10 @@
 
                 <div class="d-flex gap-2 flex-wrap mt-2">
                     <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Guardar</button>
-                    {% if producto_editar %}<a href="{% url 'admin_productos_bar' %}" class="btn btn-outline-secondary">Cancelar edición</a>{% endif %}
+                    {% if producto_editar %}
+                    <button type="submit" name="accion" value="eliminar_producto" class="btn btn-outline-danger" onclick="return confirm('Eliminar este producto del bar?');">Eliminar</button>
+                    <a href="{% url 'admin_productos_bar' %}" class="btn btn-outline-secondary">Cancelar edicion</a>
+                    {% endif %}
                 </div>
             </form>
         </div>
@@ -57,27 +64,51 @@
             <div class="table-toolbar"><h2 class="section-title mb-0">Productos registrados</h2></div>
             <div class="table-responsive-custom">
                 <table class="table mb-0">
-                    <thead><tr><th>Nombre</th><th>Categoría</th><th>Puntos requeridos</th><th>Estado</th><th>Acción</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Categoria</th>
+                            <th>Puntos requeridos</th>
+                            <th>Stock</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
                     <tbody>
                     {% for p in productos %}
                     <tr>
                         <td class="fw-bold">{{ p.nombre }}</td>
                         <td>{{ p.get_categoria_display }}</td>
                         <td><span class="badge bg-warning text-dark"><i class="bi bi-star-fill me-1"></i>{{ p.puntos_requeridos }}</span></td>
+                        <td>{{ p.stock_resumen }}</td>
                         <td>
-                            {% if p.disponible %}
+                            {% if not p.disponible %}
+                                <span class="badge badge-fuera_servicio">No disponible</span>
+                            {% elif p.tiene_stock %}
                                 <span class="badge badge-disponible">Disponible</span>
                             {% else %}
-                                <span class="badge badge-fuera_servicio">No Disponible</span>
+                                <span class="badge bg-secondary">Sin stock</span>
                             {% endif %}
                         </td>
-                        <td><a href="?editar={{ p.id }}" class="btn btn-soft btn-sm"><i class="bi bi-pencil me-1"></i>Editar</a></td>
+                        <td>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="?editar={{ p.id }}" class="btn btn-soft btn-sm"><i class="bi bi-pencil me-1"></i>Editar</a>
+                                <form method="post" class="m-0" onsubmit="return confirm('Eliminar este producto del bar?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="accion" value="eliminar_producto">
+                                    <input type="hidden" name="producto_id" value="{{ p.id }}">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash me-1"></i>Eliminar</button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
-                    {% empty %}<tr><td colspan="5"><div class="empty-state">No hay productos registrados.</div></td></tr>{% endfor %}
+                    {% empty %}
+                    <tr><td colspan="6"><div class="empty-state">No hay productos registrados.</div></td></tr>
+                    {% endfor %}
                     </tbody>
                 </table>
             </div>
-            
+
             {% if productos.has_other_pages %}
             <div class="card-footer px-4 py-3 bg-white border-top">
                 <nav>
@@ -87,7 +118,7 @@
                         {% else %}
                         <li class="page-item disabled"><span class="page-link">Anterior</span></li>
                         {% endif %}
-                        
+
                         {% for i in productos.paginator.page_range %}
                             {% if productos.number == i %}
                             <li class="page-item active"><span class="page-link">{{ i }}</span></li>
@@ -95,7 +126,7 @@
                             <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
                             {% endif %}
                         {% endfor %}
-                        
+
                         {% if productos.has_next %}
                         <li class="page-item"><a class="page-link" href="?page={{ productos.next_page_number }}">Siguiente</a></li>
                         {% else %}

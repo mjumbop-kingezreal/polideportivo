@@ -67,7 +67,7 @@ class ConfiguracionPuntosAdmin(admin.ModelAdmin):
 
 @admin.register(ProductoBar)
 class ProductoBarAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'categoria', 'puntos_requeridos', 'disponible')
+    list_display = ('nombre', 'categoria', 'puntos_requeridos', 'stock', 'disponible')
     list_filter = ('categoria', 'disponible')
     search_fields = ('nombre',)
 

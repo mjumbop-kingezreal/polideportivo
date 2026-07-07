@@ -412,8 +412,25 @@ class ProductoBar(models.Model):
     puntos_requeridos = models.PositiveIntegerField(
         help_text='Cantidad de puntos necesarios para canjear este producto.'
     )
+    stock = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        help_text='Cantidad disponible. Si se deja vacio, el producto no tendra limite de stock.'
+    )
     disponible = models.BooleanField(default=True)
     descripcion = models.CharField(max_length=200, blank=True)
+
+    @property
+    def tiene_stock(self):
+        return self.stock is None or self.stock > 0
+
+    @property
+    def stock_resumen(self):
+        if self.stock is None:
+            return 'Sin limite'
+        if self.stock == 0:
+            return 'Agotado'
+        return str(self.stock)
 
     def __str__(self):
         return f"{self.nombre} ({self.puntos_requeridos} pts)"

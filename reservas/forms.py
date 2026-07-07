@@ -500,7 +500,7 @@ class ProductoBarForm(forms.ModelForm):
 
     class Meta:
         model = ProductoBar
-        fields = ['nombre', 'categoria', 'puntos_requeridos', 'descripcion', 'disponible']
+        fields = ['nombre', 'categoria', 'puntos_requeridos', 'stock', 'descripcion', 'disponible']
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -511,6 +511,11 @@ class ProductoBarForm(forms.ModelForm):
                 'class': 'form-control',
                 'min': '1',
                 'placeholder': 'Ej. 10',
+            }),
+            'stock': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0',
+                'placeholder': 'Deja vacio si no hay limite',
             }),
             'descripcion': forms.TextInput(attrs={
                 'class': 'form-control',

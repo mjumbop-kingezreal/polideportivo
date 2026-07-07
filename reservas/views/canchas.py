@@ -84,6 +84,12 @@ def disponibilidad_view(request):
     if cancha_id:
         try:
             cancha = Cancha.objects.get(id=cancha_id)
+            if cancha.estado != Cancha.Estado.DISPONIBLE:
+                messages.warning(
+                    request,
+                    f'{cancha.nombre} no esta disponible para reservas: {cancha.get_estado_display()}.'
+                )
+                cancha = None
         except Cancha.DoesNotExist:
             messages.error(request, 'Cancha invalida.')
 

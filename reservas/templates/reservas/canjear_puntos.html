@@ -773,7 +773,6 @@
             <div>
                 <div class="eyebrow">Catalogo</div>
                 <h2 class="page-title">Productos para canjear</h2>
-                <p class="page-subtitle">Las categorias estan mas compactas para evitar espacios vacios y hacer mas rapido el canje.</p>
             </div>
             <div class="section-chip"><i class="bi bi-grid-3x3-gap"></i> {{ productos_disponibles }} productos activos</div>
         </div>
@@ -803,6 +802,7 @@
 
                         <p class="reward-description">{{ producto.descripcion|default:"Producto listo para reclamar en el bar." }}</p>
 
+                        <div class="reward-note"><i class="bi bi-box-seam"></i> Stock: {{ producto.stock_resumen }}</div>
                         <div class="reward-note"><i class="bi bi-hourglass-split"></i> Voucher valido por 30 dias.</div>
                         {% if not producto.puede_canjear %}
                         <div class="reward-note is-locked"><i class="bi bi-lock-fill"></i> Te faltan {{ producto.puntos_faltantes }} puntos.</div>

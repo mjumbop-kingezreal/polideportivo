@@ -2,6 +2,7 @@
 
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from ..codigos import generar_codigo_voucher
@@ -22,7 +23,11 @@ def canjear_puntos_view(request):
     """Muestra el catalogo, el voucher activo y el historial de canjes."""
     usuario = request.usuario
     productos = list(
-        ProductoBar.objects.filter(disponible=True).order_by('categoria', 'puntos_requeridos', 'nombre')
+        ProductoBar.objects.filter(
+            disponible=True,
+        ).filter(
+            Q(stock__isnull=True) | Q(stock__gt=0)
+        ).order_by('categoria', 'puntos_requeridos', 'nombre')
     )
     for producto in productos:
         producto.puede_canjear = producto.puntos_requeridos <= usuario.puntos_acumulados
@@ -65,40 +70,53 @@ def canjear_producto_view(request, producto_id):
         return redirect('canjear_puntos')
 
     usuario = request.usuario
-    producto = get_object_or_404(ProductoBar, id=producto_id, disponible=True)
+    producto = get_object_or_404(ProductoBar, id=producto_id)
 
     with transaction.atomic():
         usuario_actual = Usuario.objects.select_for_update().get(id=usuario.id)
+        producto_actual = ProductoBar.objects.select_for_update().get(id=producto.id)
 
-        if producto.puntos_requeridos > usuario_actual.puntos_acumulados:
+        if not producto_actual.disponible:
+            messages.error(request, f'{producto_actual.nombre} no esta disponible para canje en este momento.')
+            return redirect('canjear_puntos')
+
+        if not producto_actual.tiene_stock:
+            messages.error(request, f'{producto_actual.nombre} no tiene stock disponible en este momento.')
+            return redirect('canjear_puntos')
+
+        if producto_actual.puntos_requeridos > usuario_actual.puntos_acumulados:
             messages.error(
                 request,
-                f'No tienes suficientes puntos para canjear {producto.nombre}. '
-                f'Requieres {producto.puntos_requeridos} pts pero tienes {usuario_actual.puntos_acumulados}.'
+                f'No tienes suficientes puntos para canjear {producto_actual.nombre}. '
+                f'Requieres {producto_actual.puntos_requeridos} pts pero tienes {usuario_actual.puntos_acumulados}.'
             )
             return redirect('canjear_puntos')
 
-        usuario_actual.puntos_acumulados -= producto.puntos_requeridos
+        usuario_actual.puntos_acumulados -= producto_actual.puntos_requeridos
         usuario_actual.save(update_fields=['puntos_acumulados'])
+
+        if producto_actual.stock is not None:
+            producto_actual.stock -= 1
+            producto_actual.save(update_fields=['stock'])
 
         canje = CanjeProducto.objects.create(
             usuario=usuario_actual,
-            producto=producto,
-            puntos_usados=producto.puntos_requeridos,
+            producto=producto_actual,
+            puntos_usados=producto_actual.puntos_requeridos,
             codigo=generar_codigo_voucher(),
             estado=CanjeProducto.Estado.PENDIENTE,
         )
 
         PuntosHistorial.objects.create(
             usuario=usuario_actual,
-            puntos=producto.puntos_requeridos,
+            puntos=producto_actual.puntos_requeridos,
             tipo_movimiento=PuntosHistorial.TipoMovimiento.CANJEADO,
-            descripcion=f'Canje de producto: {producto.nombre}',
+            descripcion=f'Canje de producto: {producto_actual.nombre}',
         )
 
         messages.success(
             request,
-            f'Canje realizado: {producto.nombre}. Tu codigo es {canje.codigo} y vence el {canje.fecha_caducidad:%d/%m/%Y}.'
+            f'Canje realizado: {producto_actual.nombre}. Tu codigo es {canje.codigo} y vence el {canje.fecha_caducidad:%d/%m/%Y}.'
         )
 
     return redirect('canjear_puntos')
