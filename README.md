@@ -163,15 +163,4 @@ python manage.py test
 
 En la carpeta [documentacion](/C:/Users/DELL/Documents/PROYECTO%20FINAL/documentacion) hay material complementario del proyecto, incluyendo una guia de implementacion.
 
-## Que suele llevar un README
 
-Cuando subes un repositorio, normalmente el `README.md` explica:
-
-- que hace el proyecto,
-- que tecnologias usa,
-- como instalarlo,
-- como ejecutarlo,
-- que funcionalidades incluye,
-- quien lo puede usar o mantener.
-
-Eso ayuda a que cualquier persona entienda el repositorio sin tener que abrir el codigo primero.
